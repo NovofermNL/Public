@@ -1,54 +1,62 @@
 <#
 Naam: OSDCloud-Start.ps1
 Datum: 23-03-2025
-Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief configuratie van OOBEDeploy
+Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief OOBEDeploy met RemoveAppx
 Novoferm Nederland BV
 #>
 
-# TLS 1.2 verplichten voor internetverkeer
+# Forceer TLS1.2 voor internetverkeer
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Zet ExecutionPolicy tijdelijk op Bypass (alleen als nodig)
+# Zet execution policy tijdelijk op Bypass (alleen voor sessie)
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-Write-Host -ForegroundColor Cyan "Starten van OSDCloud"
-Start-Sleep -Seconds 5
+# Startbericht
+Write-Host -ForegroundColor Cyan "Starten van OSDCloud..."
+Start-Sleep -Seconds 3
 
-# Update OSD module
-Write-Host -ForegroundColor Cyan "Update OSD PowerShell Module"
+# Modules installeren
 Install-Module OSD -Force -AllowClobber -Scope AllUsers
-
-Write-Host -ForegroundColor Cyan "Importeer OSD PowerShell Module"
 Import-Module OSD -Force
 
-# Start installatie van Windows 11 Enterprise 24H2 (Engels)
-Write-Host -ForegroundColor Cyan "Start OSDCloud met Parameters"
-Start-OSDCloud -OSLanguage en-us -OSBuild 24H2 -OSEdition Enterprise -ZTI
-
-# === START: OOBEDeploy configuratie ===
-
-Write-Host -ForegroundColor Cyan "OOBEDeploy configuratie aanmaken..."
-
-$OOBEDeployJson = @{
-    OOBEDeploy = @{
-        Scripts = @(
-            "Invoke-WebPSScript 'https://raw.githubusercontent.com/NovofermNL/Public/refs/heads/main/RemoveUnwantedApps.ps1'"
-        )
-        Restart = $false
-        LogPath = "C:\script-logging\RemoveUnwantedApps"
-    }
+# Parameters voor Windows-installatie
+$OSDParams = @{
+    OSBuild     = "24H2"
+    OSEdition   = "Enterprise"
+    OSLanguage  = "en-us"
+    OSLicense   = "Retail"
+    ZTI         = $true
+    SkipAutopilot = $true
+    SkipODT       = $true
 }
+Start-OSDCloud @OSDParams
 
-$JsonPath = "$env:LocalAppData\Temp\OSDeploy.OOBEDeploy.json"
-$OOBEDeployJson | ConvertTo-Json -Depth 3 | Set-Content -Path $JsonPath -Encoding UTF8
-
-# Installeer OOBEDeploy en stel het in
+# Post-OS: Installeer OOBEDeploy en configureer AppX-verwijdering
 Install-Module OOBEDeploy -Force -AllowClobber -Scope AllUsers
-Start-OOBEDeploy
+Import-Module OOBEDeploy -Force
 
-Write-Host -ForegroundColor Green "OOBEDeploy is succesvol geconfigureerd"
+# OOBEDeploy uitvoeren met RemoveAppx lijst
+$OOBEParams = @{
+    Autopilot      = $false
+    RemoveAppx     = @(
+        "CommunicationsApps",     
+        "OfficeHub",
+        "People",
+        "Skype",
+        "Solitaire",
+        "Xbox",
+        "ZuneMusic",
+        "ZuneVideo",
+        "OutlookForWindows",      
+        "YourPhone",
+        "MicrosoftWindows.Client.WebExperience"
+    )
+    UpdateDrivers  = $true
+    UpdateWindows  = $true
+}
+Start-OOBEDeploy @OOBEParams
 
-# Wacht even zodat alles netjes wegschrijft, dan reboot
-Write-Host -ForegroundColor Cyan "Herstart in 30 seconden..."
+# Reboot na afronden
+Write-Host -ForegroundColor Cyan "Windows wordt opnieuw opgestart in 30 seconden..."
 Start-Sleep -Seconds 30
 wpeutil reboot
