@@ -1,24 +1,31 @@
-Write-Host  -ForegroundColor Cyan "Starten van  OSDCloud"
+<#
+Naam: OSDCloud-Start.ps1
+Datum: 23-03-2025
+Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief configuratie van OOBEDeploy
+Novoferm Nederland BV
+#>
+
+Write-Host -ForegroundColor Cyan "Starten van OSDCloud"
 Start-Sleep -Seconds 5
 
-#Change Display Resolution for Virtual Machine
+# Resolutie aanpassen als het een virtuele machine is
 if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host  -ForegroundColor Cyan "Resolutie aanpassen tot max 1600x"
+    Write-Host -ForegroundColor Cyan "Resolutie aanpassen tot max 1600x"
     Set-DisRes 1600
 }
 
-#Make sure I have the latest OSD Content
-Write-Host  -ForegroundColor Cyan "Update OSD PowerShell Module"
+# Update OSD module
+Write-Host -ForegroundColor Cyan "Update OSD PowerShell Module"
 Install-Module OSD -Force
 
-Write-Host  -ForegroundColor Cyan "Import OSD PowerShell Module"
+Write-Host -ForegroundColor Cyan "Importeer OSD PowerShell Module"
 Import-Module OSD -Force
 
-#Start OSDCloud ZTI the RIGHT way
-Write-Host  -ForegroundColor Cyan "Start OSDCloud met Parameters"
+# Start installatie van Windows 11 Enterprise 24H2 (Engels)
+Write-Host -ForegroundColor Cyan "Start OSDCloud met Parameters"
 Start-OSDCloud -OSLanguage en-us -OSBuild 24H2 -OSEdition Enterprise -ZTI
 
-# === START: Toevoegen van OOBEDeploy configuratie ===
+# === START: OOBEDeploy configuratie ===
 
 Write-Host -ForegroundColor Cyan "OOBEDeploy configuratie aanmaken..."
 
@@ -40,11 +47,11 @@ $OOBEDeployJson | ConvertTo-Json -Depth 3 | Set-Content -Path $JsonPath -Encodin
 Install-Module OOBEDeploy -Force
 Start-OOBEDeploy
 
-Write-Host -ForegroundColor Green "OOBEDeploy is geconfigureerd"
+Write-Host -ForegroundColor Green "OOBEDeploy is succesvol geconfigureerd"
 
-# === EIND: Toevoegen van OOBEDeploy configuratie ===
+# === EINDE: OOBEDeploy configuratie ===
 
-#Restart from WinPE
-Write-Host  -ForegroundColor Cyan "Restart in 30 seconden"
-Start-Sleep -Seconds 20
+# Wacht even zodat alles netjes wegschrijft, dan reboot
+Write-Host -ForegroundColor Cyan "Herstart in 30 seconden..."
+Start-Sleep -Seconds 30
 wpeutil reboot
