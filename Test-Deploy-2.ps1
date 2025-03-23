@@ -9,12 +9,6 @@
 #   Creates post deployment scripts for Autopilot
 #================================================
 
-#   PreOS - Set VM Display Resolution
-if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host -ForegroundColor Cyan "Setting Display Resolution to 1600x"
-    Set-DisRes 1600
-}
-
 #   PreOS - Set TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
