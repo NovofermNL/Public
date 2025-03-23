@@ -39,7 +39,7 @@ Import-Module OOBEDeploy -Force
 $OOBEParams = @{
     Autopilot      = $false
     RemoveAppx     = @(
-        "CommunicationsApps",     
+        "CommunicationsApps",     # Mail & Agenda
         "OfficeHub",
         "People",
         "Skype",
