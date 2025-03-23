@@ -1,156 +1,134 @@
 #================================================
 #   OSDCloud Build Sequence
 #   WARNING: Will wipe hard drive without prompt!!
-#   Windows 11 24H2 Pro en-gb Retail
+#   Windows 11 24H2 Pro nl-nl Volume
 #   Deploys OS
 #   Updates OS
 #   Removes AppX Packages from OS
 #   No Office Deployment Tool
 #   Creates post deployment scripts for Autopilot
 #================================================
-#   PreOS
-#   Set VM Display Resolution
+
+#   PreOS - Set VM Display Resolution
 if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host  -ForegroundColor Cyan "Setting Display Resolution to 1600x"
+    Write-Host -ForegroundColor Cyan "Setting Display Resolution to 1600x"
     Set-DisRes 1600
 }
+
+#   PreOS - Set TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+#   Install and Import OSD Module (met WinPE-check)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
+    Install-Module OSD -Force -AllowClobber -SkipPublisherCheck
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
+}
+Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
+Import-Module OSD -Force
+
+#   Waarschuwing voor dataverlies
+Write-Host "`nDISCLAIMER: - Going further will erase all data on your disk!`n" -ForegroundColor Red
+
 #================================================
-#   PreOS
-# Set TLS to 1.2
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
-
-#   Install and Import OSD Module
-Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
-Install-Module OSD -Force -AllowClobber -SkipPublisherCheck
-Write-Host  -ForegroundColor Green "Importing OSD PowerShell Module"
-Import-Module OSD -Force 
-
-#    Produce warning on data erase
-Write-Host "`n DISCLAIMER: - Going further will erase all data on your disk ! `n"-ForegroundColor Red
-
-#================================================
-#   [OS] Start-OSDCloud with Params
+#   Start-OSDCloud met NL-NL instellingen
 #================================================
 $Params = @{
-    OSName = "Windows 11 24H2 x64"
-    OSEdition = "Pro"
-    OSLanguage = "nl-nl"
-    OSLicense = "volume"
+    OSName        = "Windows 11 24H2 x64"
+    OSEdition     = "Pro"
+    OSLanguage    = "nl-nl"
+    OSLicense     = "Volume"
     SkipAutopilot = $true
-    SkipODT = $true
-    ZTI = $True
+    SkipODT       = $true
+    ZTI           = $true
 }
 Start-OSDCloud @Params
-#================================================
-#   WinPE PostOS Sample
-#   AutopilotOOBE Offline Staging
-#================================================
-Install-Module AutopilotOOBE -Force -AllowClobber -SkipPublisherCheck
-Import-Module AutopilotOOBE -Force
 
-$Params = @{
-    Title = 'Autopilot Registration'
-    GroupTagOptions = 'NL-ICT'
-    Hidden = 'AddToGroup','AssignedComputerName','AssignedUser','PostAction'
-    Assign = $true
-    PostAction = 'Restart'
-    Run = 'PowerShell'
-    Disabled = 'Assign'
+#================================================
+#   WinPE PostOS - Verwijder AppX pakketten
+#================================================
+Start-Transcript -Path "C:\script-logging\Remove-AppxApps\log_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+
+$AppList = @(
+    "Microsoft.Xbox*",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo",
+    "Microsoft.SkypeApp",
+    "Microsoft.BingNews",
+    "Microsoft.BingWeather",
+    "Microsoft.GetHelp",
+    "Microsoft.Getstarted",
+    "Microsoft.People",
+    "Microsoft.MicrosoftSolitaireCollection",
+    "Microsoft.Microsoft3DViewer",
+    "Microsoft.MixedReality.Portal",
+    "Microsoft.WindowsFeedbackHub",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.XboxSpeechToTextOverlay",
+    "Microsoft.YourPhone",
+    "Microsoft.MicrosoftOfficeHub",
+    "Microsoft.Todos",
+    "Microsoft.OneConnect",
+    "Microsoft.OutlookForWindows"
+)
+
+foreach ($App in $AppList) {
+    Write-Host "Verwijderen van: $App" -ForegroundColor Yellow
+    Get-AppxPackage -AllUsers -Name $App | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+    Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -like $App} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
 }
-AutopilotOOBE @Params
+
+Stop-Transcript
+
 #================================================
-#   WinPE PostOS Sample
-#   OOBEDeploy Offline Staging
+#   WinPE PostOS - OOBEDeploy met updates
 #================================================
-$Params = @{
-    Autopilot = $true
-    RemoveAppx = "CommunicationsApps","OfficeHub","People","Skype","Solitaire","Xbox","ZuneMusic","ZuneVideo","GetHelp","BingWeather","GamingApp","WindowsMaps","BingNews","MicrosoftTeams"
-    UpdateDrivers = $true
-    UpdateWindows = $true
-}
-Start-OOBEDeploy @Params
+Start-OOBEDeploy -UpdateDrivers -UpdateWindows
+
 #================================================
-#   WinPE PostOS
-#   Set OOBEDeploy CMD.ps1
+#   WinPE PostOS - Set OOBEDeploy CMD.ps1
 #================================================
 $SetCommand = @'
 @echo off
-
-:: Set the PowerShell Execution Policy
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-
-:: Add PowerShell Scripts to the Path
 set path=%path%;C:\Program Files\WindowsPowerShell\Scripts
-
-:: Open and Minimize a PowerShell instance just in case
 start PowerShell -NoL -W Mi
-
-:: Set Embedded BIOS Product Key
 Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/durrante/OSDCloud/main/ScriptPad/Set-EmbeddedBIOSProductKey.ps1
-
-:: Install the latest OSD Module
 start "Install-Module OSD" /wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-
-:: Start-OOBEDeploy
-:: The next line assumes that you have a configuration saved in C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json
 start "Start-OOBEDeploy" PowerShell -NoL -C Start-OOBEDeploy
-
 exit
 '@
 $SetCommand | Out-File -FilePath "C:\Windows\OOBEDeploy.cmd" -Encoding ascii -Force
+
 #================================================
-#   WinPE PostOS
-#   Set AutopilotOOBE CMD.ps1
+#   WinPE PostOS - Set AutopilotOOBE CMD.ps1
 #================================================
 $SetCommand = @'
 @echo off
-
-:: Set the PowerShell Execution Policy
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-
-:: Add PowerShell Scripts to the Path
 set path=%path%;C:\Program Files\WindowsPowerShell\Scripts
-
-:: Open and Minimize a PowerShell instance just in case
 start PowerShell -NoL -W Mi
-
-:: Install the latest AutopilotOOBE Module
 start "Install-Module AutopilotOOBE" /wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
-
-:: Start-AutopilotOOBE
-:: The next line assumes that you have a configuration saved in C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json
 start "Start-AutopilotOOBE" PowerShell -NoL -C Start-AutopilotOOBE
-
 exit
 '@
 $SetCommand | Out-File -FilePath "C:\Windows\Autopilot.cmd" -Encoding ascii -Force
 
 #================================================
-#   PostOS
-#   Restart-Computer & Display Message
+#   PostOS - Meld gebruiker & herstart
 #================================================
-# Display a banner of asterisks for emphasis
 Write-Host -ForegroundColor Yellow "*************************************************************************"
-
-# Display the word "IMPORTANT!" in red and enlarged text
 Write-Host -ForegroundColor Red "`n`n`n                  IMPORTANT! IMPORTANT! IMPORTANT!`n`n`n"
-
-# Display another banner of asterisks for emphasis
 Write-Host -ForegroundColor Yellow "*************************************************************************"
-
-# Display the instructions in Cyan for better readability
 Write-Host -ForegroundColor Cyan -NoNewline "INSTRUCTIONS: "
 Write-Host -ForegroundColor White "Ensure to run the C:\Windows\OOBEDeploy.cmd to complete the Autopilot readiness build."
 
-# Load System.Windows.Forms for MessageBox functionality
 Add-Type -AssemblyName System.Windows.Forms
-
-# Define the message and title for the MessageBox
 $message = "Please remove the build USB stick, ensure that there are no errors in the above logs.`n`nIf no errors are present, click OK to restart this device and continue with the OSDCloud setup process by running C:\Windows\OOBEDeploy.cmd after restart."
 $title = "Action Required"
-
-# Show the MessageBox and wait for the user to click OK
 [System.Windows.Forms.MessageBox]::Show($message, $title, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 
-# Restart the device
 wpeutil reboot
