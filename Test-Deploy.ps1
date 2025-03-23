@@ -1,64 +1,33 @@
-#Requires -RunAsAdministrator
+<#
+Scriptnaam: Deploy-OSDCloud.ps1
+Datum: 23-03-2025
+Beschrijving: Start automatisch de installatie van Windows 11 24H2 (nl-nl, volume), met driver updates en OOBE-script via GitHub.
+Auteur: Novoferm Nederland BV
+#>
 
-$Automate = @'
-{
-    "BrandName":  "Novoferm Nederland",
-    "BrandColor":  "RED",
-    "OSActivation":  "Volume",
-    "OSEdition":  "Enterprise",
-    "OSLanguage":  "nl-nl",
-    "OSImageIndex":  6,
-    "OSName":  "Windows 11 24H2 x64",
-    "OSReleaseID":  "24H2",
-    "OSVersion":  "Windows 11",
-    "OSActivationValues":  [
-        "Retail",
-        "Volume"
-    ],
-    "OSEditionValues":  [
-        "Enterprise",
-        "Pro"
-    ],
-    "OSLanguageValues":  [
-        "nl-nl",
-        "en-us"
-    ],
-    "OSNameValues":  [
-        "Windows 11 24H2 x64",
-        "Windows 10 22H2 x64"
-    ],
-    "OSReleaseIDValues":  [
-        "24H2"
-    ],
-    "OSVersionValues":  [
-        "Windows 11",
-        "Windows 10"
-    ],
-    "ClearDiskConfirm":  false,
-    "restartComputer":  false,
-    "updateDiskDrivers":  false,
-    "updateFirmware":  false,
-    "updateNetworkDrivers":  true,
-    "updateSCSIDrivers":  true
+Write-Host ">>> [OSDCloud] Installatie wordt gestart..." -ForegroundColor Cyan
+
+# Configureer OSDCloud image (automatisch)
+$OSDCloudConfig = @{
+    OSVersion       = "Windows 11"
+    OSEdition       = "Pro"
+    OSBuild         = "24H2"
+    OSLanguage      = "nl-nl"
+    OSLicense       = "Volume"
+    ZTI             = $true
+    Restart         = $true
+    DriverPack      = $true
 }
-'@
 
+Start-OSDCloud @OSDCloudConfig
 
-$AutomateISO = "$(Get-OSDCloudWorkspace)\Media\OSDCloud\Automate"
-if (!(Test-Path $AutomateISO)) {
-    New-Item -Path $AutomateISO -ItemType Directory -Force
-}
-$Automate | Out-File -FilePath "$AutomateISO\Start-OSDCloudGUI.json" -Force
+# Script dat tijdens OOBE uitgevoerd wordt (download van GitHub)
+$scriptUrl = "https://raw.githubusercontent.com/<jouwGitHubRepo>/main/Remove-AppxApps.ps1"
+$scriptPath = "C:\MyScripts\Remove-AppxApps.ps1"
 
+Write-Host ">>> Downloaden van Remove-AppxApps.ps1 vanaf GitHub..."
+New-Item -Path "C:\MyScripts" -ItemType Directory -Force | Out-Null
+Invoke-WebRequest -Uri $scriptUrl -OutFile $scriptPath
 
-$AutomateUSB = "$(Get-OSDCloudWorkspace)\Media\Automate"
-if (!(Test-Path $AutomateUSB)) {
-    New-Item -Path $AutomateUSB -ItemType Directory -Force
-}
-$Automate | Out-File -FilePath "$AutomateUSB\Start-OSDCloudGUI.json" -Force
-
-# Run Edit-OSDCloudWinPE to rebuild
-Edit-OSDCloudWinPE -StartOSDCloudGUI
-
-# Test in a Virtual Machine
-New-OSDCloudVM
+# Start OOBE fase met AppX verwijdering
+Start-OOBEDeploy -UpdateDrivers -UpdateWindows -Script $scriptPath
