@@ -5,6 +5,7 @@ $appxPackages = @(
     "Clipchamp.Clipchamp",
     "Microsoft.549981C3F5F10", # Cortana
     "Microsoft.BingNews",
+    "microsoft.outlookforwindows",
     "Microsoft.BingWeather",
     "Microsoft.GamingApp", # Xbox app
     "Microsoft.GetHelp",
