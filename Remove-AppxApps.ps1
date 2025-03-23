@@ -1,16 +1,14 @@
 <#
 Scriptnaam: Remove-AppxApps.ps1
 Datum: 23-03-2025
-Beschrijving: Verwijdert opgegeven AppX packages voor alle gebruikers (inclusief provisioning) tijdens OOBE.
+Beschrijving: Verwijdert opgegeven AppX packages voor alle gebruikers tijdens OOBE.
 Auteur: Novoferm Nederland BV
 #>
 
-# Logging
 $logDir = "C:\script-logging\Remove-AppxApps"
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 Start-Transcript -Path "$logDir\log_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
 
-# Lijst met AppX packages (wildcards toegestaan)
 $AppList = @(
     "Microsoft.Xbox*",
     "Microsoft.ZuneMusic",
@@ -33,19 +31,19 @@ $AppList = @(
     "Microsoft.MicrosoftOfficeHub",
     "Microsoft.Todos",
     "Microsoft.OneConnect",
-    "Microsoft.OutlookForWindows"  
+    "Microsoft.OutlookForWindows"
 )
 
 foreach ($App in $AppList) {
-    Write-Host "`nBezig met verwijderen van: $App" -ForegroundColor Yellow
+    Write-Host "`nVerwerken: $App" -ForegroundColor Yellow
 
-    # Verwijder geïnstalleerde appx packages (voor alle users)
+    # Verwijder voor bestaande gebruikers
     Get-AppxPackage -AllUsers -Name $App | ForEach-Object {
         Write-Host " - Verwijderen package: $($_.Name)"
         Remove-AppxPackage -Package $_.PackageFullName -AllUsers -ErrorAction SilentlyContinue
     }
 
-    # Verwijder provisioned packages (voor toekomstige gebruikers)
+    # Verwijder provisioned package
     Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -like $App} | ForEach-Object {
         Write-Host " - Verwijderen provisioned package: $($_.DisplayName)"
         Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue
