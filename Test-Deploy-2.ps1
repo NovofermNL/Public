@@ -39,7 +39,7 @@ $Params = @{
     OSEdition     = "Pro"
     OSLanguage    = "nl-nl"
     OSLicense     = "Volume"
-    SkipAutopilot = $true
+    SkipAutopilot = $false
     SkipODT       = $true
     ZTI           = $true
 }
@@ -116,19 +116,5 @@ start "Start-AutopilotOOBE" PowerShell -NoL -C Start-AutopilotOOBE
 exit
 '@
 $SetCommand | Out-File -FilePath "C:\Windows\Autopilot.cmd" -Encoding ascii -Force
-
-#================================================
-#   PostOS - Meld gebruiker & herstart
-#================================================
-Write-Host -ForegroundColor Yellow "*************************************************************************"
-Write-Host -ForegroundColor Red "`n`n`n                  IMPORTANT! IMPORTANT! IMPORTANT!`n`n`n"
-Write-Host -ForegroundColor Yellow "*************************************************************************"
-Write-Host -ForegroundColor Cyan -NoNewline "INSTRUCTIONS: "
-Write-Host -ForegroundColor White "Ensure to run the C:\Windows\OOBEDeploy.cmd to complete the Autopilot readiness build."
-
-Add-Type -AssemblyName System.Windows.Forms
-$message = "Please remove the build USB stick, ensure that there are no errors in the above logs.`n`nIf no errors are present, click OK to restart this device and continue with the OSDCloud setup process by running C:\Windows\OOBEDeploy.cmd after restart."
-$title = "Action Required"
-[System.Windows.Forms.MessageBox]::Show($message, $title, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 
 wpeutil reboot
