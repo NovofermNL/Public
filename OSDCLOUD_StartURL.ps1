@@ -5,18 +5,18 @@ Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief con
 Novoferm Nederland BV
 #>
 
+# TLS 1.2 verplichten voor internetverkeer
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Zet ExecutionPolicy tijdelijk op Bypass (alleen als nodig)
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
 Write-Host -ForegroundColor Cyan "Starten van OSDCloud"
 Start-Sleep -Seconds 5
 
-# Resolutie aanpassen als het een virtuele machine is
-if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host -ForegroundColor Cyan "Resolutie aanpassen tot max 1600x"
-    Set-DisRes 1600
-}
-
 # Update OSD module
 Write-Host -ForegroundColor Cyan "Update OSD PowerShell Module"
-Install-Module OSD -Force
+Install-Module OSD -Force -AllowClobber -Scope AllUsers
 
 Write-Host -ForegroundColor Cyan "Importeer OSD PowerShell Module"
 Import-Module OSD -Force
@@ -28,8 +28,6 @@ Start-OSDCloud -OSLanguage en-us -OSBuild 24H2 -OSEdition Enterprise -ZTI
 # === START: OOBEDeploy configuratie ===
 
 Write-Host -ForegroundColor Cyan "OOBEDeploy configuratie aanmaken..."
-
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $OOBEDeployJson = @{
     OOBEDeploy = @{
@@ -44,12 +42,11 @@ $OOBEDeployJson = @{
 $JsonPath = "$env:LocalAppData\Temp\OSDeploy.OOBEDeploy.json"
 $OOBEDeployJson | ConvertTo-Json -Depth 3 | Set-Content -Path $JsonPath -Encoding UTF8
 
-Install-Module OOBEDeploy -Force
+# Installeer OOBEDeploy en stel het in
+Install-Module OOBEDeploy -Force -AllowClobber -Scope AllUsers
 Start-OOBEDeploy
 
 Write-Host -ForegroundColor Green "OOBEDeploy is succesvol geconfigureerd"
-
-# === EINDE: OOBEDeploy configuratie ===
 
 # Wacht even zodat alles netjes wegschrijft, dan reboot
 Write-Host -ForegroundColor Cyan "Herstart in 30 seconden..."
