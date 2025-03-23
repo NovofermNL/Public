@@ -22,7 +22,7 @@ $OSDCloudConfig = @{
 Start-OSDCloud @OSDCloudConfig
 
 # Script dat tijdens OOBE uitgevoerd wordt (download van GitHub)
-$scriptUrl = "https://raw.githubusercontent.com/<jouwGitHubRepo>/main/Remove-AppxApps.ps1"
+$scriptUrl = "https://raw.githubusercontent.com/NovofermNL/Public/refs/heads/main/Remove-AppxApps.ps1"
 $scriptPath = "C:\MyScripts\Remove-AppxApps.ps1"
 
 Write-Host ">>> Downloaden van Remove-AppxApps.ps1 vanaf GitHub..."
