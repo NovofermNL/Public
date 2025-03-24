@@ -19,10 +19,10 @@ Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 
 
-# Stap 1: Installeer Windows 11
+#I    nstalleer Windows 11
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-# Stap 2: Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
+#    Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
 $TargetPath = "C:\"
 $apps = @(
     "Microsoft.549981C3F5F10"                # Cortana
@@ -67,5 +67,5 @@ foreach ($app in $apps) {
     }
 }
 
-# Stap 3: Herstart naar OOBE
+#   Herstart naar OOBE
 Restart-Computer
