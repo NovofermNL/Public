@@ -1,17 +1,23 @@
 <#
 Scriptnaam: Deploy.ps1
-Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
+Beschrijving: Volledige automatische installatie via OSDCloud met AppX-verwijdering vóór OOBE
 Datum: 24-03-2025
 Organisatie: Novoferm Nederland BV
 #>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Stap 1: Installeer Windows 11 zonder extra drivers of updates
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+# Logging
+$LogPath = "C:\script-logging\Remove-Appx\"
+New-Item -Path $LogPath -ItemType Directory -Force | Out-Null
+Start-Transcript -Path "$LogPath\Remove-Appx.log" -Append
 
-# Stap 2: Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
-$TargetPath = "C:\"
+Write-Host "Start OSDCloud installatie..."
+
+# Stap 1: Installeer Windows
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -DriverPack Dell -UpdateDrivers -UpdateWindows
+
+# Stap 2: Verwijder AppX Provisioned Packages vóór OOBE
 $apps = @(
     'Clipchamp.Clipchamp',
     'Microsoft.549981C3F5F10',
@@ -40,10 +46,14 @@ $apps = @(
 )
 
 foreach ($app in $apps) {
-    Get-AppxProvisionedPackage -Path $TargetPath | Where-Object DisplayName -eq $app | ForEach-Object {
-        Remove-AppxProvisionedPackage -Path $TargetPath -PackageName $_.PackageName -ErrorAction SilentlyContinue
+    $provisioned = Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq $app
+    foreach ($pkg in $provisioned) {
+        Write-Host "Verwijderen: $($pkg.DisplayName) ($($pkg.PackageName))"
+        Remove-AppxProvisionedPackage -Online -PackageName $pkg.PackageName -ErrorAction SilentlyContinue
     }
 }
 
-# Stap 3: Herstart naar OOBE
+Stop-Transcript
+
+# Optioneel: reboot na installatie en opruimen
 Restart-Computer
