@@ -5,13 +5,18 @@ Datum: 24-03-2025
 Organisatie: Novoferm Nederland BV
 #>
 
+#   PreOS - Set TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
-Install-Module OSD -Force
-
-Write-Host  -ForegroundColor Green "Importing OSD PowerShell Module"
-Import-Module OSD -Force   
+#   Install and Import OSD Module (met WinPE-check)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
+    Install-Module OSD -Force 
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
+}
+Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
+Import-Module OSD -Force
 
 
 # Stap 1: Installeer Windows 11
