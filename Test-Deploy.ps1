@@ -1,5 +1,5 @@
 <#
-Scriptnaam: Test-Deploy.ps1
+Scriptnaam: Deploy.ps1
 Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
 Datum: 24-03-2025
 Organisatie: Novoferm Nederland BV
