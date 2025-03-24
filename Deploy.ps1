@@ -19,7 +19,7 @@ Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 
 
-#I    nstalleer Windows 11
+#    Istalleer Windows 11
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
 #    Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
