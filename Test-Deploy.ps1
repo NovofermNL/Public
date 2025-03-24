@@ -1,33 +1,49 @@
 <#
-Scriptnaam: Deploy-OSDCloud.ps1
-Datum: 23-03-2025
-Beschrijving: Start automatisch de installatie van Windows 11 24H2 (nl-nl, volume), met driver updates en OOBE-script via GitHub.
-Auteur: Novoferm Nederland BV
+Scriptnaam: Deploy.ps1
+Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
+Datum: 24-03-2025
+Organisatie: Novoferm Nederland BV
 #>
 
-Write-Host ">>> [OSDCloud] Installatie wordt gestart..." -ForegroundColor Cyan
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Configureer OSDCloud image (automatisch)
-$OSDCloudConfig = @{
-    OSVersion       = "Windows 11"
-    OSEdition       = "Pro"
-    OSBuild         = "24H2"
-    OSLanguage      = "nl-nl"
-    OSLicense       = "Volume"
-    ZTI             = $true
-    Restart         = $true
-    DriverPack      = $true
+# Stap 1: Installeer Windows 11 zonder extra drivers of updates
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+
+# Stap 2: Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
+$TargetPath = "C:\"
+$apps = @(
+    'Clipchamp.Clipchamp',
+    'Microsoft.549981C3F5F10',
+    'Microsoft.BingNews',
+    'Microsoft.BingWeather',
+    'Microsoft.GamingApp',
+    'Microsoft.GetHelp',
+    'Microsoft.Getstarted',
+    'Microsoft.MicrosoftOfficeHub',
+    'Microsoft.MicrosoftSolitaireCollection',
+    'Microsoft.People',
+    'Microsoft.Todos',
+    'Microsoft.WindowsAlarms',
+    'microsoft.windowscommunicationsapps',
+    'Microsoft.WindowsFeedbackHub',
+    'Microsoft.WindowsMaps',
+    'Microsoft.Xbox.TCUI',
+    'Microsoft.XboxGameOverlay',
+    'Microsoft.XboxGamingOverlay',
+    'Microsoft.XboxIdentityProvider',
+    'Microsoft.XboxSpeechToTextOverlay',
+    'Microsoft.YourPhone',
+    'Microsoft.ZuneMusic',
+    'Microsoft.ZuneVideo',
+    'Microsoft.OutlookForWindows' # Nieuwe Outlook
+)
+
+foreach ($app in $apps) {
+    Get-AppxProvisionedPackage -Path $TargetPath | Where-Object DisplayName -eq $app | ForEach-Object {
+        Remove-AppxProvisionedPackage -Path $TargetPath -PackageName $_.PackageName -ErrorAction SilentlyContinue
+    }
 }
 
-Start-OSDCloud @OSDCloudConfig
-
-# Script dat tijdens OOBE uitgevoerd wordt (download van GitHub)
-$scriptUrl = "https://raw.githubusercontent.com/NovofermNL/Public/refs/heads/main/Remove-AppxApps.ps1"
-$scriptPath = "C:\MyScripts\Remove-AppxApps.ps1"
-
-Write-Host ">>> Downloaden van Remove-AppxApps.ps1 vanaf GitHub..."
-New-Item -Path "C:\MyScripts" -ItemType Directory -Force | Out-Null
-Invoke-WebRequest -Uri $scriptUrl -OutFile $scriptPath
-
-# Start OOBE fase met AppX verwijdering
-Start-OOBEDeploy -UpdateDrivers -UpdateWindows -Script $scriptPath
+# Stap 3: Herstart naar OOBE
+Restart-Computer
