@@ -1,59 +1,5 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted
 
-#================================================
-# [PreOS] AppX Cleanup + Update OSD Module + Deploy Windows
-#================================================
-
-# Verwijder ongewenste AppX pakketten
-$apps = @(
-    "Microsoft.549981C3F5F10"
-    "Microsoft.BingWeather"
-    "Microsoft.BingSearch"    
-    "Microsoft.GetHelp"
-    "Microsoft.Getstarted"         
-    "Microsoft.Microsoft3DViewer"
-    "Microsoft.MicrosoftOfficeHub"
-    "Microsoft.MicrosoftSolitaireCollection"
-    "Microsoft.MicrosoftStickyNotes"
-    "Microsoft.MixedReality.Portal"
-    "Microsoft.MSPaint"
-    "Microsoft.Office.OneNote"
-    "Microsoft.OneDrive"
-    "Microsoft.People"
-    "Microsoft.PowerAutomateDesktop"   
-    "Microsoft.SkypeApp"
-    "Microsoft.Todos"
-    "Microsoft.WindowsAlarms"
-    "Microsoft.WindowsCamera"
-    "microsoft.windowscommunicationsapps"
-    "Microsoft.WindowsFeedbackHub"
-    "Microsoft.WindowsMaps"
-    "Microsoft.WindowsSoundRecorder"
-    "Microsoft.Xbox.TCUI"
-    "Microsoft.XboxGameOverlay"
-    "Microsoft.XboxGamingOverlay"
-    "Microsoft.XboxIdentityProvider"
-    "Microsoft.XboxSpeechToTextOverlay"
-    "Microsoft.YourPhone"
-    "Microsoft.ZuneMusic"
-    "Microsoft.ZuneVideo"
-    "MicrosoftTeams"
-    "Microsoft.OutlookForWindows"
-)
-
-foreach ($app in $apps) {
-    Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
-    Write-Host "Verwijderd: $app" -ForegroundColor Yellow
-}
-
-#================================================
-#   [PreOS] Update OSD Module
-#================================================
-if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host  -ForegroundColor Green "Setting Display Resolution to 1600x"
-    Set-DisRes 1600
-}
-
 Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
 Install-Module OSD -Force
 
@@ -93,3 +39,4 @@ Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation
 Write-Host  -ForegroundColor Green "Restarting in 20 seconds!"
 Start-Sleep -Seconds 20
 wpeutil reboot
+
