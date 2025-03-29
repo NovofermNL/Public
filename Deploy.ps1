@@ -19,10 +19,10 @@ $Global:MyOSDCloud = [ordered]@{
     Restart = [bool]$False
     RecoveryPartition = [bool]$true
     OEMActivation = [bool]$True
-    WindowsUpdate = [bool]$false
-    WindowsUpdateDrivers = [bool]$false
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$true
     WindowsDefenderUpdate = [bool]$false
-    SetTimeZone = [bool]$False
+    SetTimeZone = [bool]$true
     ClearDiskConfirm = [bool]$False
 }
 
