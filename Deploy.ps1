@@ -56,7 +56,7 @@ $apps = @(
     "Microsoft.ZuneMusic",
     "Microsoft.ZuneVideo",
     "MicrosoftTeams",                        # Teams (Store app)
-    "Microsoft.OutlookForWindows"           # New Outlook
+    "Microsoft.OutlookForWindows" 
 )
 
 foreach ($app in $apps) {
