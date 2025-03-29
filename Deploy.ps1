@@ -55,7 +55,7 @@ $apps = @(
     "Microsoft.YourPhone",
     "Microsoft.ZuneMusic",
     "Microsoft.ZuneVideo",
-    "MicrosoftTeams",                       
+    "MicrosoftTeams"                      
 )
 
 foreach ($app in $apps) {
