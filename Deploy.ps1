@@ -39,12 +39,12 @@ $apps = @(
     "Microsoft.Office.OneNote"
     "Microsoft.OneDrive"
     "Microsoft.People"
-    "Microsoft.PowerAutomateDesktop"         # Power Automate Desktop
+    "Microsoft.PowerAutomateDesktop"         
     "Microsoft.SkypeApp"
     "Microsoft.Todos"
     "Microsoft.WindowsAlarms"
     "Microsoft.WindowsCamera"
-    "microsoft.windowscommunicationsapps"    # Mail & Agenda
+    "microsoft.windowscommunicationsapps"    
     "Microsoft.WindowsFeedbackHub"
     "Microsoft.WindowsMaps"
     "Microsoft.WindowsSoundRecorder"
@@ -56,8 +56,8 @@ $apps = @(
     "Microsoft.YourPhone"
     "Microsoft.ZuneMusic"
     "Microsoft.ZuneVideo"
-    "MicrosoftTeams"                         # Teams (Store app)
-    "Microsoft.OutlookForWindows"            # New Outlook
+    "MicrosoftTeams"                         
+    "Microsoft.OutlookForWindows"            
 )
 
 
