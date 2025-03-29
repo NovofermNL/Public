@@ -4,11 +4,11 @@
 
 # Verwijder ongewenste AppX pakketten
 $apps = @(
-    "Microsoft.549981C3F5F10"                # Cortana
+    "Microsoft.549981C3F5F10"
     "Microsoft.BingWeather"
-    "Microsoft.BingSearch"                   # BingSearch extensie
+    "Microsoft.BingSearch"    
     "Microsoft.GetHelp"
-    "Microsoft.Getstarted"                   # 'Aan de slag'
+    "Microsoft.Getstarted"         
     "Microsoft.Microsoft3DViewer"
     "Microsoft.MicrosoftOfficeHub"
     "Microsoft.MicrosoftSolitaireCollection"
@@ -18,12 +18,12 @@ $apps = @(
     "Microsoft.Office.OneNote"
     "Microsoft.OneDrive"
     "Microsoft.People"
-    "Microsoft.PowerAutomateDesktop"         # Power Automate Desktop
+    "Microsoft.PowerAutomateDesktop"   
     "Microsoft.SkypeApp"
     "Microsoft.Todos"
     "Microsoft.WindowsAlarms"
     "Microsoft.WindowsCamera"
-    "microsoft.windowscommunicationsapps"    # Mail & Agenda
+    "microsoft.windowscommunicationsapps"
     "Microsoft.WindowsFeedbackHub"
     "Microsoft.WindowsMaps"
     "Microsoft.WindowsSoundRecorder"
@@ -35,8 +35,8 @@ $apps = @(
     "Microsoft.YourPhone"
     "Microsoft.ZuneMusic"
     "Microsoft.ZuneVideo"
-    "MicrosoftTeams"                         # Teams (Store app)
-    "Microsoft.OutlookForWindows"            # New Outlook
+    "MicrosoftTeams"
+    "Microsoft.OutlookForWindows"
 )
 
 foreach ($app in $apps) {
