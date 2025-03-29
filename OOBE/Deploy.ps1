@@ -1,4 +1,4 @@
-<#
+/<#
 Scriptnaam: Deploy.ps1
 Beschrijving: Installeert Windows 11 via OSDCloud en voert na installatie automatisch PostInstall.ps1 uit vanaf GitHub
 Datum: 24-03-2025
@@ -25,4 +25,4 @@ Import-Module OOBEDeploy -Force
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -ZTI
 
 # Laat automatisch PostInstall.ps1 vanaf GitHub uitvoeren ná installatie
-Start-OOBEDeploy -ScriptUrl "https://raw.githubusercontent.com/NovofermNL/Public/main/PostInstall.ps1" -PostAction Restart
+Start-OOBEDeploy -ScriptUrl "https://raw.githubusercontent.com/NovofermNL/Public/main/OOBE/PostInstall.ps1" -PostAction Restart
