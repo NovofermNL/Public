@@ -1,9 +1,5 @@
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted
 
-install-module osd -force
-import-module osd
-
-
 #================================================
 # [PreOS] AppX Cleanup + Update OSD Module + Deploy Windows
 #================================================
