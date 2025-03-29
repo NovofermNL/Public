@@ -1,42 +1,70 @@
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted
+<#
+Scriptnaam: Deploy.ps1
+Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
+Datum: 24-03-2025
+Organisatie: Novoferm Nederland BV
+#>
 
-Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
-Install-Module OSD -Force
+#   PreOS - Set TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Write-Host  -ForegroundColor Green "Importing OSD PowerShell Module"
-Import-Module OSD -Force
-
-# Variables to define the Windows OS / Edition etc to be applied during OSDCloud
-$OSVersion = 'Windows 11'
-$OSReleaseID = '24H2'
-$OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Enterprise'
-$OSActivation = 'Volume'
-$OSLanguage = 'nl-nl'
-
-# Set OSDCloud Vars
-$Global:MyOSDCloud = [ordered]@{
-    Restart = [bool]$False
-    RecoveryPartition = [bool]$true
-    OEMActivation = [bool]$True
-    WindowsUpdate = [bool]$true
-    WindowsUpdateDrivers = [bool]$true
-    WindowsDefenderUpdate = [bool]$false
-    SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$False
+#   Install and Import OSD Module (met WinPE-check)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
+    Install-Module OSD -Force 
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
 }
 
-# write variables to console
-$Global:MyOSDCloud
+Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
+Import-Module OSD -Force
 
-# Launch OSDCloud
-Write-Host "Starting OSDCloud" -ForegroundColor Green
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+#   Installeer Windows 11
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-#================================================
-#   Restart-Computer
-#================================================
-Write-Host  -ForegroundColor Green "Restarting in 20 seconds!"
-Start-Sleep -Seconds 20
-wpeutil reboot
+#   Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
+$TargetPath = "C:\"
+$apps = @(
+    "Microsoft.549981C3F5F10",
+    "Microsoft.BingWeather",
+    "Microsoft.BingSearch",
+    "Microsoft.GetHelp",
+    "Microsoft.Getstarted",
+    "Microsoft.Microsoft3DViewer",
+    "Microsoft.MicrosoftOfficeHub",
+    "Microsoft.MicrosoftSolitaireCollection",
+    "Microsoft.MicrosoftStickyNotes",
+    "Microsoft.MixedReality.Portal",
+    "Microsoft.MSPaint",
+    "Microsoft.Office.OneNote",
+    "Microsoft.OneDrive",
+    "Microsoft.People",
+    "Microsoft.PowerAutomateDesktop",
+    "Microsoft.SkypeApp",
+    "Microsoft.Todos",
+    "Microsoft.WindowsAlarms",
+    "Microsoft.WindowsCamera",
+    "microsoft.windowscommunicationsapps",
+    "Microsoft.WindowsFeedbackHub",
+    "Microsoft.WindowsMaps",
+    "Microsoft.WindowsSoundRecorder",
+    "Microsoft.Xbox.TCUI",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.XboxSpeechToTextOverlay",
+    "Microsoft.YourPhone",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo",
+    "MicrosoftTeams",
+    "Microsoft.OutlookForWindows"
+)
 
+foreach ($app in $apps) {
+    Get-AppxProvisionedPackage -Path $TargetPath | Where-Object DisplayName -eq $app | ForEach-Object {
+        Remove-AppxProvisionedPackage -Path $TargetPath -PackageName $_.PackageName -ErrorAction SilentlyContinue
+    }
+}
+
+#   Herstart naar OOBE
+Restart-Computer
