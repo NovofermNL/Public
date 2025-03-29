@@ -1,30 +1,28 @@
 <#
 Scriptnaam: Deploy.ps1
-Beschrijving: Installeert Windows 11, installeert benodigde modules en start post-install taken via OOBEDeploy
+Beschrijving: Installeert Windows 11 via OSDCloud en voert na installatie automatisch PostInstall.ps1 uit vanaf GitHub
 Datum: 24-03-2025
 Organisatie: Novoferm Nederland BV
 #>
 
-#   TLS 1.2 afdwingen
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-#   Installeer en importeer OSD-module (WinPE-check)
+# Installeer/Importeer benodigde modules
 if ($env:SystemDrive -ne "X:") {
-    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
-    Install-Module OSD -Force 
+    Write-Host -ForegroundColor Green "Installeren van OSD module (buiten WinPE)"
+    Install-Module OSD -Force
 } else {
     Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
 }
 Import-Module OSD -Force
 
-#   Installeer modules voor post-install automatisering
 Install-Module AutopilotOOBE -Force
 Install-Module OOBEDeploy -Force
 Import-Module AutopilotOOBE -Force
 Import-Module OOBEDeploy -Force
 
-#   Start installatie van Windows 11
+# Start de installatie van Windows 11
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -ZTI
 
-#   Start OOBE-deploy na installatie (verwijdert AppX, voegt NetFX toe, etc.)
-Start-OOBEDeploy -PostAction 'Restart'
+# Laat automatisch PostInstall.ps1 vanaf GitHub uitvoeren ná installatie
+Start-OOBEDeploy -ScriptUrl "https://raw.githubusercontent.com/NovofermNL/Public/main/PostInstall.ps1" -PostAction Restart
