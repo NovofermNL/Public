@@ -1,6 +1,6 @@
 <#
 Scriptnaam: Deploy.ps1
-Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
+Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages + user-based AppX packages, en voegt .NET Framework 3.5 toe
 Datum: 24-03-2025
 Organisatie: Novoferm Nederland BV
 #>
@@ -23,15 +23,13 @@ Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterp
 
 #   Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
 $TargetPath = "C:\"
-$logFile = "C:\script-logging\Deploy\remove-appx.log"
-New-Item -ItemType Directory -Path (Split-Path $logFile) -Force | Out-Null
 
 $apps = @(
-    "Microsoft.549981C3F5F10"                # Cortana
+    "Microsoft.549981C3F5F10"
     "Microsoft.BingWeather"
-    "Microsoft.BingSearch"                   # BingSearch extensie
+    "Microsoft.BingSearch"
     "Microsoft.GetHelp"
-    "Microsoft.Getstarted"                   # 'Aan de slag'
+    "Microsoft.Getstarted"
     "Microsoft.Microsoft3DViewer"
     "Microsoft.MicrosoftOfficeHub"
     "Microsoft.MicrosoftSolitaireCollection"
@@ -41,12 +39,12 @@ $apps = @(
     "Microsoft.Office.OneNote"
     "Microsoft.OneDrive"
     "Microsoft.People"
-    "Microsoft.PowerAutomateDesktop"         # Power Automate Desktop
+    "Microsoft.PowerAutomateDesktop"
     "Microsoft.SkypeApp"
     "Microsoft.Todos"
     "Microsoft.WindowsAlarms"
     "Microsoft.WindowsCamera"
-    "microsoft.windowscommunicationsapps"    # Mail & Agenda
+    "microsoft.windowscommunicationsapps"
     "Microsoft.WindowsFeedbackHub"
     "Microsoft.WindowsMaps"
     "Microsoft.WindowsSoundRecorder"
@@ -58,24 +56,64 @@ $apps = @(
     "Microsoft.YourPhone"
     "Microsoft.ZuneMusic"
     "Microsoft.ZuneVideo"
-    "MicrosoftTeams"                         # Teams (Store app)
-    "Microsoft.OutlookForWindows"            # New Outlook
+    "MicrosoftTeams"
+    "Microsoft.OutlookForWindows"
 )
 
+Write-Host -ForegroundColor Yellow "Start verwijderen van AppX Provisioned Packages..."
 foreach ($app in $apps) {
     $matchedPackages = Get-AppxProvisionedPackage -Path $TargetPath | Where-Object DisplayName -eq $app
 
     foreach ($package in $matchedPackages) {
-        $msg = "Verwijderen: $($package.DisplayName) - $($package.PackageName)"
-        Write-Host -ForegroundColor Cyan $msg
-        $msg | Out-File -Append -FilePath $logFile
+        Write-Host -ForegroundColor Cyan "Verwijderen: $($package.DisplayName) - $($package.PackageName)"
         Remove-AppxProvisionedPackage -Path $TargetPath -PackageName $package.PackageName -ErrorAction SilentlyContinue
     }
 
     if (-not $matchedPackages) {
-        $msg = "Niet gevonden: $app"
-        Write-Host -ForegroundColor DarkGray $msg
-        $msg | Out-File -Append -FilePath $logFile
+        Write-Host -ForegroundColor DarkGray "Niet gevonden: $app"
+    }
+}
+
+#   Verwijder ook user-based AppX packages via Remove-AppxOnline (post-install)
+$RemoveAppx = @(
+    "CommunicationsApps",
+    "OfficeHub",
+    "People",
+    "Skype",
+    "Solitaire",
+    "Xbox",
+    "ZuneMusic",
+    "ZuneVideo",
+    "OutlookForWindows"  # Nieuwe Outlook (Store-versie)
+)
+
+Write-Host -ForegroundColor Yellow "Start verwijderen van AppX Online (user-based)..."
+foreach ($Item in $RemoveAppx) {
+    try {
+        Write-Host -ForegroundColor Magenta "Remove-AppxOnline -Name $Item"
+        Remove-AppxOnline -Name $Item -ErrorAction Stop
+    } catch {
+        Write-Warning "Fout bij verwijderen van $Item via Remove-AppxOnline: $_"
+    }
+}
+
+#   Installeer .NET Framework 3.5 (en gerelateerde capabilities via OSD Get-MyWindowsCapability)
+Write-Host -ForegroundColor Yellow "Controleren op NetFX-gerelateerde Windows Capabilities..."
+
+$AddWindowsCapability = Get-MyWindowsCapability -Match 'NetFX' -Detail
+
+foreach ($Item in $AddWindowsCapability) {
+    if ($Item.State -eq 'Installed') {
+        Write-Host -ForegroundColor DarkGray "$($Item.DisplayName)"
+    }
+    else {
+        Write-Host -ForegroundColor DarkCyan "Installeren: $($Item.DisplayName)"
+        try {
+            $Item | Add-WindowsCapability -Online -ErrorAction Stop | Out-Null
+        }
+        catch {
+            Write-Warning "Fout bij installeren van $($Item.DisplayName): $_"
+        }
     }
 }
 
