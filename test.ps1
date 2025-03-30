@@ -32,9 +32,9 @@ function OSDCloudLogic {
     
     $Params = @{
         OSVersion = "Windows 11"
-        OSBuild = "22H2"
+        OSBuild = "24H2"
         OSEdition = "Pro"
-        OSLanguage = "de-de"
+        OSLanguage = "nl-nl"
         ZTI = $true
         Firmware = $true
     }
