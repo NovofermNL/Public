@@ -16,7 +16,7 @@ Write-Host -ForegroundColor Cyan "Starten van OSDCloud..."
 Start-Sleep -Seconds 3
 
 # Modules installeren
-Install-Module OSD -Force -AllowClobber -Scope AllUsers
+Install-Module OSD -Force
 Import-Module OSD -Force
 
 # Parameters voor Windows-installatie
