@@ -39,20 +39,54 @@ Import-Module OOBEDeploy -Force
 $OOBEParams = @{
     Autopilot      = $false
     RemoveAppx     = @(
-        "CommunicationsApps",
-        "OfficeHub",
-        "People",
-        "Skype",
-        "Solitaire",
-        "Xbox",
-        "ZuneMusic",
-        "ZuneVideo",
-        "OutlookForWindows",
-        "YourPhone",
-        "MicrosoftWindows.Client.WebExperience"
+        "Clipchamp.Clipchamp",
+        "Microsoft.ApplicationCompatibilityEnhancements",
+        "Microsoft.AV1VideoExtension",
+        "Microsoft.AVCEncoderVideoExtension",
+        "Microsoft.BingNews",
+        "Microsoft.BingSearch",
+        "Microsoft.BingWeather",
+        "Microsoft.DesktopAppInstaller",
+        "Microsoft.GamingApp",
+        "Microsoft.GetHelp",
+        "Microsoft.HEIFImageExtension",
+        "Microsoft.HEVCVideoExtension",
+        "Microsoft.MicrosoftOfficeHub",                  # = OfficeHub
+        "Microsoft.MicrosoftSolitaireCollection",        # = Solitaire
+        "Microsoft.MicrosoftStickyNotes",
+        "Microsoft.MPEG2VideoExtension",
+        "Microsoft.OutlookForWindows",                   # = OutlookForWindows
+        "Microsoft.Paint",
+        "Microsoft.PowerAutomateDesktop",
+        "Microsoft.RawImageExtension",
+        "Microsoft.ScreenSketch",
+        "Microsoft.SecHealthUI",
+        "Microsoft.StorePurchaseApp",
+        "Microsoft.Todos",
+        "Microsoft.VP9VideoExtensions",
+        "Microsoft.WebMediaExtensions",
+        "Microsoft.WebpImageExtension",
+        "Microsoft.Windows.DevHome",
+        "Microsoft.Windows.Photos",
+        "Microsoft.WindowsAlarms",
+        "Microsoft.WindowsCalculator",
+        "Microsoft.WindowsCamera",
+        "Microsoft.WindowsFeedbackHub",
+        "Microsoft.WindowsNotepad",
+        "Microsoft.WindowsSoundRecorder",
+        "Microsoft.WindowsStore",
+        "Microsoft.WindowsTerminal",
+        "Microsoft.Xbox.TCUI",
+        "Microsoft.XboxGamingOverlay",
+        "Microsoft.XboxIdentityProvider",
+        "Microsoft.XboxSpeechToTextOverlay",
+        "Microsoft.YourPhone",
+        "Microsoft.ZuneMusic",
+        "MicrosoftCorporationII.QuickAssist",
+        "MicrosoftWindows.Client.WebExperience",
+        "MicrosoftWindows.CrossDevice",
+        "MSTeams"
     )
-    UpdateDrivers  = $true
-    UpdateWindows  = $true
 }
 Start-OOBEDeploy @OOBEParams
 
