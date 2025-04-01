@@ -44,7 +44,12 @@ AutopilotOOBE @Params
 #================================================
 $Params = @{
     Autopilot = $true
-    RemoveAppx = "CommunicationsApps","OfficeHub","People","Skype","Solitaire","Xbox","ZuneMusic","ZuneVideo"
+   RemoveAppx    = "XboxGameOverlay","XboxSpeechToTextOverlay","Xbox.TCUI","XboxIdentityProvider",
+                    "BingNews","GamingApp","GetHelp","Getstarted","Clipchamp","OfficeHub","OneNote",
+                    "PowerAutomateDesktop","XboxGamingOverlay","WindowsMaps","ZuneVideo",
+                    "CommunicationsApps","FeedbackHub","YourPhone","WebExperience","DevHome",
+                    "Weather","People","Solitaire","WindowsAlarms","ZuneMusic","Todos",
+                    "OutlookForWindows","549981C3F5F10","SpotifyMusic","Office.Desktop","Family","MSTeams"
     UpdateDrivers = $true
     UpdateWindows = $true
 }
