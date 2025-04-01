@@ -97,7 +97,7 @@ function OSDCloudLogic {
     $Serial = Get-WmiObject Win32_bios | Select-Object -ExpandProperty SerialNumber
     $TargetComputername = $Serial.Substring(0,9)
 
-    $AssignedComputerName = "$ComputerPrefix-AkosCloud-$TargetComputername"
+    $AssignedComputerName = "$ComputerPrefix-Novoferm-$TargetComputername"
     Write-Host -ForegroundColor Green $AssignedComputerName
 
     $AutopilotOOBEJson = @"
