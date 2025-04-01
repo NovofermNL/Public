@@ -1,53 +1,82 @@
 <#
-Naam: OSDCloud-Start.ps1
+Naam: Deploy.ps1
 Datum: 01-04-2025
-Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief OOBEDeploy met RemoveAppx vanaf lokaal script
+Beschrijving: OSDCloud-installatie inclusief automatische Appx-verwijdering via OSDeploy.OOBEDeploy.json
 Novoferm Nederland BV
 #>
 
-# Forceer TLS1.2 voor internetverkeer
-#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-# Zet execution policy tijdelijk op Bypass (alleen voor sessie)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# Startbericht
-Write-Host -ForegroundColor Cyan "Starten van OSDCloud..."
-Start-Sleep -Seconds 3
+Write-Host "=== Start OSDCloud Setup ===" -ForegroundColor Cyan
 
-# Modules installeren
+# --- Stap 1: Installeer OSD-module ---
 Install-Module OSD -Force
 Import-Module OSD -Force
 
-# Parameters voor Windows-installatie
+# --- Stap 2: Start Windows 11 installatie ---
 $OSDParams = @{
-    OSBuild       = "24H2"
-    OSEdition     = "Pro"
-    OSLanguage    = "nl-nl"
-    OSLicense     = "Retail"
-    ZTI           = $true
-    SkipAutopilot = $true
-    SkipODT       = $true
+    OSVersion    = "Windows 11"
+    OSBuild      = "24H2"
+    OSEdition    = "Pro"
+    OSLanguage   = "nl-nl"
+    ZTI          = $true
+    Firmware     = $true
 }
 Start-OSDCloud @OSDParams
 
-# Script downloaden naar lokaal pad (C:\Windows\System32\OOBE)
-$ScriptUrl  = "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1"
-$ScriptPath = "C:\Windows\System32\OOBE\Remove-Appx.ps1"
+# --- Stap 3: Maak OSDeploy.OOBEDeploy.json aan ---
+$OOBEDeployJson = @'
+{
+  "Autopilot": {
+    "IsPresent": false
+  },
+  "RemoveAppx": [
+    "Microsoft.549981C3F5F10",
+    "Microsoft.BingWeather",
+    "Microsoft.GetHelp",
+    "Microsoft.Getstarted",
+    "Microsoft.Microsoft3DViewer",
+    "Microsoft.MicrosoftOfficeHub",
+    "Microsoft.MicrosoftSolitaireCollection",
+    "Microsoft.MixedReality.Portal",
+    "Microsoft.Office.OneNote",
+    "Microsoft.People",
+    "Microsoft.SkypeApp",
+    "Microsoft.Wallet",
+    "Microsoft.WindowsCamera",
+    "microsoft.windowscommunicationsapps",
+    "Microsoft.WindowsFeedbackHub",
+    "Microsoft.WindowsMaps",
+    "Microsoft.Xbox.TCUI",
+    "Microsoft.XboxApp",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.XboxSpeechToTextOverlay",
+    "Microsoft.YourPhone",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo"
+  ],
+  "UpdateDrivers": {
+    "IsPresent": true
+  },
+  "UpdateWindows": {
+    "IsPresent": true
+  },
+  "PostAction": "Quit"
+}
+'@
 
-if (-not (Test-Path "C:\Windows\System32\OOBE")) {
-    New-Item -Path "C:\Windows\System32\OOBE" -ItemType Directory -Force | Out-Null
+$OOBEDeployPath = "C:\ProgramData\OSDeploy"
+if (-not (Test-Path $OOBEDeployPath)) {
+    New-Item -Path $OOBEDeployPath -ItemType Directory -Force | Out-Null
 }
 
-Invoke-WebRequest -Uri $ScriptUrl -OutFile $ScriptPath -UseBasicParsing
-Write-Host "Remove-Appx.ps1 script opgeslagen op: $ScriptPath" -ForegroundColor Green
+$OOBEDeployJson | Out-File -FilePath "$OOBEDeployPath\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
+Write-Host "OOBEDeploy-configuratiebestand aangemaakt op: $OOBEDeployPath" -ForegroundColor Green
 
-# OOBEDeploy installeren en configureren
-Install-OOBEDeploy
-Set-OOBEDeploy -PostAction $ScriptPath
-Start-OOBEDeploy
-
-# Reboot na afronden
+# --- Stap 4: Reboot om OOBE fase te starten ---
 Write-Host -ForegroundColor Cyan "Windows wordt opnieuw opgestart in 30 seconden..."
 Start-Sleep -Seconds 30
 wpeutil reboot
