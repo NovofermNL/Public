@@ -5,7 +5,7 @@ Beschrijving: Verwijdert opgegeven AppX packages voor alle gebruikers tijdens OO
 Auteur: Novoferm Nederland BV
 #>
 
-$logDir = "C:\script-logging\Remove-AppxApps"
+$logDir = "C:\temp\script-logging\Remove-AppxApps"
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 Start-Transcript -Path "$logDir\log_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
 
