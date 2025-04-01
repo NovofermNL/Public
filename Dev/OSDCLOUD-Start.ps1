@@ -14,9 +14,9 @@ Import-Module OSD -Force
 #================================================
 $Params = @{
     OSBuild = "24H2"
-    OSEdition = "Pro"
+    OSEdition = "Enterprise"
     OSLanguage = "nl-nl"
-    OSLicense = "Retail"
+    OSLicense = "Volume"
     SkipAutopilot = $true
     SkipODT = $true
 }
