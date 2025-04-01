@@ -6,7 +6,7 @@ Novoferm Nederland BV
 #>
 
 # Forceer TLS1.2 voor internetverkeer
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Zet execution policy tijdelijk op Bypass (alleen voor sessie)
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
