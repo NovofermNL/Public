@@ -1,58 +1,71 @@
 <#
-Naam: Deploy.ps1
-Datum: 01-04-2025
-Beschrijving: Windows 11 24H2 Pro NL-NL via OSDCloud met RemoveAppx tijdens OOBE
-Novoferm Nederland BV
+Scriptnaam: Deploy.ps1
+Beschrijving: Installeert Windows 11 en verwijdert vooraf AppX provisioned packages
+Datum: 24-03-2025
+Organisatie: Novoferm Nederland BV
 #>
 
+#   PreOS - Set TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
-# Modules installeren
-#Install-Module OSD -Force
+#   Install and Import OSD Module (met WinPE-check)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
+    Install-Module OSD -Force 
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
+}
+Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 
-# Windows installeren
-$OSDParams = @{
-    OSVersion     = "Windows 11"
-    OSBuild       = "24H2"
-    OSEdition     = "Pro"
-    OSLanguage    = "nl-nl"
-    ZTI           = $true
-    SkipAutopilot = $true
-    SkipODT       = $true
+
+#    Istalleer Windows 11
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+
+#    Verwijder vooraf ongewenste AppX Provisioned Packages uit het geïnstalleerde image
+$TargetPath = "C:\"
+$apps = @(
+    "Microsoft.549981C3F5F10"                # Cortana
+    "Microsoft.BingWeather"
+    "Microsoft.BingSearch"                   
+    "Microsoft.GetHelp"
+    "Microsoft.Getstarted"                   # 'Aan de slag'
+    "Microsoft.Microsoft3DViewer"
+    "Microsoft.MicrosoftOfficeHub"
+    "Microsoft.MicrosoftSolitaireCollection"
+    "Microsoft.MicrosoftStickyNotes"
+    "Microsoft.MixedReality.Portal"
+    "Microsoft.MSPaint"
+    "Microsoft.Office.OneNote"
+    "Microsoft.OneDrive"
+    "Microsoft.People"
+    "Microsoft.PowerAutomateDesktop"         # Power Automate Desktop
+    "Microsoft.SkypeApp"
+    "Microsoft.Todos"
+    "Microsoft.WindowsAlarms"
+    "Microsoft.WindowsCamera"
+    "microsoft.windowscommunicationsapps"    # Mail & Agenda
+    "Microsoft.WindowsFeedbackHub"
+    "Microsoft.WindowsMaps"
+    "Microsoft.WindowsSoundRecorder"
+    "Microsoft.Xbox.TCUI"
+    "Microsoft.XboxGameOverlay"
+    "Microsoft.XboxGamingOverlay"
+    "Microsoft.XboxIdentityProvider"
+    "Microsoft.XboxSpeechToTextOverlay"
+    "Microsoft.YourPhone"
+    "Microsoft.ZuneMusic"
+    "Microsoft.ZuneVideo"
+    "MicrosoftTeams"                         # Teams (Store app)
+    "Microsoft.OutlookForWindows"            # New Outlook
+)
+
+
+foreach ($app in $apps) {
+    Get-AppxProvisionedPackage -Path $TargetPath | Where-Object DisplayName -eq $app | ForEach-Object {
+        Remove-AppxProvisionedPackage -Path $TargetPath -PackageName $_.PackageName -ErrorAction SilentlyContinue
+    }
 }
-Start-OSDCloud @OSDParams
 
-# OOBEDeploy module installeren
-Install-Module OOBEDeploy -Force
-Import-Module OOBEDeploy -Force
-
-# Appx verwijderen tijdens OOBE
-$Params = @{
-    Autopilot     = $false
-    RemoveAppx    = "XboxGameOverlay","XboxSpeechToTextOverlay","Xbox.TCUI","XboxIdentityProvider",
-                    "BingNews","GamingApp","GetHelp","Getstarted","Clipchamp","OfficeHub","OneNote",
-                    "PowerAutomateDesktop","XboxGamingOverlay","WindowsMaps","ZuneVideo",
-                    "CommunicationsApps","FeedbackHub","YourPhone","WebExperience","DevHome",
-                    "Weather","People","Solitaire","WindowsAlarms","ZuneMusic","Todos",
-                    "OutlookForWindows","549981C3F5F10","SpotifyMusic","Office.Desktop","Family","MSTeams"
-    UpdateDrivers = $true
-    UpdateWindows = $true
-}
-Start-OOBEDeploy @Params
-
-# OOBEDeploy cmd-script aanmaken
-$OOBECmd = @'
-@echo off
-PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-set path=%path%;C:\Program Files\WindowsPowerShell\Scripts
-start "Start-OOBEDeploy" PowerShell -NoL -C Start-OOBEDeploy
-exit
-'@
-$OOBECmd | Out-File -FilePath "C:\Windows\OOBEDeploy.cmd" -Encoding ascii -Force
-
-# Herstart naar OOBE
-Write-Host -ForegroundColor Cyan "Herstart in 20 seconden voor OOBE-fase..."
-Start-Sleep -Seconds 20
-wpeutil reboot
+#   Herstart naar OOBE
+Restart-Computer
