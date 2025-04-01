@@ -103,7 +103,7 @@ function OSDCloudLogic {
     $AutopilotOOBEJson = @"
     {
         "Assign":  {
-                        "IsPresent":  true
+                        "IsPresent":  false
                     },
         "GroupTag":  "$AssignedComputerName",
         "AddToGroup": "GroupX",
