@@ -14,11 +14,11 @@ $Global:oobeCloud = @{
     oobeSetRegionLanguage = $true
     oobeSetDateTime = $true
     oobeRegisterAutopilot = $false
-    oobeRegisterAutopilotCommand = 'Get-WindowsAutopilotInfo -Online -GroupTag Demo -Assign'
+    oobeRegisterAutopilotCommand = 'Get-WindowsAutopilotInfo -Online -GroupTag Test -Assign'
     oobeRemoveAppxPackage = $true
     oobeRemoveAppxPackageName = 'CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo'
     oobeAddCapability = $true
-    oobeAddCapabilityName = 'GroupPolicy','ServerManager','VolumeActivation'
+    oobeAddCapabilityName = 'NetFX'
     oobeUpdateDrivers = $true
     oobeUpdateWindows = $true
     oobeRestartComputer = $true
@@ -27,12 +27,12 @@ $Global:oobeCloud = @{
 
 function Step-KeyboardLanguage {
 
-    Write-Host -ForegroundColor Green "Set keyboard language to de-CH"
+    Write-Host -ForegroundColor Green "Set keyboard language to nl-nl"
     Start-Sleep -Seconds 5
     
     $LanguageList = Get-WinUserLanguageList
     
-    $LanguageList.Add("de-CH")
+    $LanguageList.Add("nl-nl")
     Set-WinUserLanguageList $LanguageList -Force | Out-Null
     
     Start-Sleep -Seconds 5
