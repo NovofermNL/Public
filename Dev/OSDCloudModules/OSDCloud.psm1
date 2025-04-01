@@ -47,7 +47,7 @@ function OSDCloudLogic {
     $OOBEDeployJson = @'
     {
         "Autopilot":  {
-                        "IsPresent":  false
+                        "IsPresent":  true
                     },
         "RemoveAppx":  [
                         "Microsoft.549981C3F5F10",
@@ -138,7 +138,7 @@ Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force
 :: Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://check-autopilotprereq.osdcloud.ch
 :: Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://start-autopilotoobe.osdcloud.ch
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://tpm.osdcloud.ch
+::Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://tpm.osdcloud.ch
 Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleunUp.ps1
 Start /Wait PowerShell -NoL -C Restart-Computer -Force
 '@
