@@ -9,7 +9,7 @@ Novoferm Nederland BV
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 # Modules installeren
-Install-Module OSD -Force
+#Install-Module OSD -Force
 Import-Module OSD -Force
 
 # Windows installeren
