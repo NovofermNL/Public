@@ -32,7 +32,7 @@ $OSDParams = @{
 Start-OSDCloud @OSDParams
 
 # Script downloaden naar lokaal pad (C:\Windows\System32\OOBE)
-$ScriptUrl  = "https://raw.githubusercontent.com/NovofermNL/Public/main/OOBE/Remove-Appx.ps1"
+$ScriptUrl  = "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1"
 $ScriptPath = "C:\Windows\System32\OOBE\Remove-Appx.ps1"
 
 if (-not (Test-Path "C:\Windows\System32\OOBE")) {
