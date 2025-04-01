@@ -1,7 +1,7 @@
 <#
 Naam: OSDCloud-Start.ps1
 Datum: 01-04-2025
-Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief OOBEDeploy met RemoveAppx vanaf lokale schijf
+Beschrijving: Automatische installatie van Windows 11 via OSDCloud inclusief OOBEDeploy met RemoveAppx vanaf lokaal script
 Novoferm Nederland BV
 #>
 
@@ -22,7 +22,7 @@ Import-Module OSD -Force
 # Parameters voor Windows-installatie
 $OSDParams = @{
     OSBuild       = "24H2"
-    OSEdition     = "Enterprise"
+    OSEdition     = "Pro"
     OSLanguage    = "nl-nl"
     OSLicense     = "Retail"
     ZTI           = $true
@@ -42,12 +42,10 @@ if (-not (Test-Path "C:\Windows\System32\OOBE")) {
 Invoke-WebRequest -Uri $ScriptUrl -OutFile $ScriptPath -UseBasicParsing
 Write-Host "Remove-Appx.ps1 script opgeslagen op: $ScriptPath" -ForegroundColor Green
 
-# OOBEDeploy installeren en script aanroepen vanaf lokaal pad
-Install-Module OOBEDeploy -Force -AllowClobber -Scope AllUsers
-Import-Module OOBEDeploy -Force
-
-# Script uitvoeren NA OOBE via lokale PostAction
-Start-OOBEDeploy -PostAction $ScriptPath
+# OOBEDeploy installeren en configureren
+Install-OOBEDeploy
+Set-OOBEDeploy -PostAction $ScriptPath
+Start-OOBEDeploy
 
 # Reboot na afronden
 Write-Host -ForegroundColor Cyan "Windows wordt opnieuw opgestart in 30 seconden..."
