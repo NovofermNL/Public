@@ -19,7 +19,7 @@ $Params = @{
     OSVersion = "Windows 11"
     OSBuild = "24H2"
     OSEdition = "Pro"
-    OSLanguage = "en-us"
+    OSLanguage = "nl-nl"
     OSLicense = "Retail"
     ZTI = $true
     Firmware = $false
@@ -128,10 +128,8 @@ PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/AkosBakos/OSDCloud/main/Set-KeyboardLanguage.ps1
-
+Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Set-KeyboardLang.ps1
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
-
 Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleunUp.ps1
 Start /Wait PowerShell -NoL -C Restart-Computer -Force
 '@
