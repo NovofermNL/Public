@@ -7,7 +7,7 @@
 #   PreOS
 #   Install and Import OSD Module
 #================================================
-Install-Module OSD -Force
+#Install-Module OSD -Force
 Import-Module OSD -Force
 #================================================
 #   [OS] Start-OSDCloud with Params
