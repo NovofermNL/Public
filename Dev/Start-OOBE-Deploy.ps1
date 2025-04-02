@@ -57,8 +57,8 @@ function Start-OOBEDeploy {
     #=================================================
 if ($CustomProfile -eq 'Sample') {
     $AddNetFX3 = $true
-    $AddRSAT = $true
-    $Autopilot = $true
+    $AddRSAT = $false
+    $Autopilot = $false
     $UpdateDrivers = $true
     $UpdateWindows = $true
     $RemoveAppx = @(
