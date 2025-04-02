@@ -37,9 +37,7 @@ Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
 Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
 Start /Wait PowerShell -NoL -C Import-Module OSD -Force
-Start /Wait PowerShell -NoL -C Start-OOBEDeploy -AddNetFX3 -RemoveAppx -SetEdition Enterprise -Verbose
-Start /Wait PowerShell -NoL -C Restart-Computer -Force
-
+Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
