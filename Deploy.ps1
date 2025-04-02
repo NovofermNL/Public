@@ -1,24 +1,50 @@
-Write-Host -ForegroundColor Green "Starting OSDCloud ZTI"
-Start-Sleep -Seconds 5
+###################################################################
+########## Novoferm Nederland W11-24h2 Deployment script ##########
+###################################################################
 
-Start-OSDCloud -OSVersion 'Windows 11' -OSBuild 24H2 -OSEdition Pro -OSLanguage nl-nl -OSLicense Retail -ZTI
+# TLS 1.2 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Restart from WinPE
-Write-Host -ForegroundColor Green "Create C:\Windows\System32\OOBETasks.CMD"
+# Installeer de OSD-module (alleen buiten WinPE)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
+    Install-Module -Name OSD -Force -Scope CurrentUser
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
+}
 
-$OOBETasksCMD = @'
+# Importeer de OSD-module
+try {
+    Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
+    Import-Module -Name OSD -Force -ErrorAction Stop
+    Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
+}
+catch {
+    Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
+    exit 1
+}
+
+# Start installatie van Windows 11 via OSDCloud
+Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -ZTI
+
+# Maak OOBE.cmd voor automatische taken tijdens OOBE-fase
+Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
+
+$OOBECMD = @'
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-Set Path=%PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-:: Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
-Start /Wait PowerShell -NoL -C Start-OOBEDeploy -AddNetFX3 -RemoveAppx -SetEdition Enterprise -verbose
+Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
+Start /Wait PowerShell -NoL -C Import-Module OSD -Force
+Start /Wait PowerShell -NoL -C Start-OOBEDeploy -AddNetFX3 -RemoveAppx -SetEdition Enterprise -Verbose
 Start /Wait PowerShell -NoL -C Restart-Computer -Force
+
 '@
 
-$OOBETasksCMD | Out-File -FilePath 'C:\Windows\System32\OOBETasks.CMD' -Encoding ascii -Force
+$OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
 
-Write-Host -ForegroundColor Green "Restarting in 20 seconds..."
+# Reboot vanuit WinPE
+Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
-
 wpeutil reboot
