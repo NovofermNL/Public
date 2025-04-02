@@ -1,0 +1,20 @@
+﻿{
+    "Assign":  {
+                   "IsPresent":  true
+               },
+    "GroupTag":  "Enterprise",
+    "GroupTagOptions":  [
+                            "Development",
+                            "Engineering",
+                            "Enterprise"
+                        ],
+    "Hidden":  [
+                   "AddToGroup",
+                   "AssignedComputerName",
+                   "AssignedUser"
+               ],
+    "PostAction":  "Restart",
+    "Run":  "WindowsSettings",
+    "Docs":  "https://autopilotoobe.osdeploy.com/",
+    "Title":  "OSDeploy Autopilot Registration"
+}
