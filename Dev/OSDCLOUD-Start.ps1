@@ -97,7 +97,7 @@ $AutopilotOOBEJson = @"
     "AssignedComputerName" : "$AssignedComputerName",
     "AddToGroup":  "AADGroupX",
     "Assign":  {
-                   "IsPresent":  true
+                   "IsPresent":  false
                },
     "GroupTag":  "GroupTagXXX",
     "Hidden":  [
