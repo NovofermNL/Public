@@ -1,48 +1,34 @@
-###################################################################
-########## Novoferm Nederland W11-24h2 Deployment script ##########
-###################################################################
+<#
+Scriptnaam: Deploy.ps1 
+Datum: 03-04-2025
+Beschrijving: Windows 11 24H2 installatie zonder
+Auteur: Novoferm Nederland BV
+#>
 
-# TLS 1.2 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Installeer de OSD-module (alleen buiten WinPE)
+# Alleen OSD-module installeren als we niet in WinPE zijn
 if ($env:SystemDrive -ne "X:") {
-    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
+    Write-Host -ForegroundColor Green "Buiten WinPE – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force -Scope CurrentUser
-} else {
-    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
 # Importeer de OSD-module
-try {
-    Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
-    Import-Module -Name OSD -Force -ErrorAction Stop
-    Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
-}
-catch {
-    Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
-    exit 1
-}
+Import-Module -Name OSD -Force
 
-# Start installatie van Windows 11 via OSDCloud
-Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -ZTI
+# Start installatie ZONDER -ZTI zodat OOBE uitgevoerd wordt
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-# Maak OOBE.cmd voor automatische taken tijdens OOBE-fase
-Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
-
+# Schrijf OOBE.cmd die tijdens OOBE-fase onze deployment aanroept
 $OOBECMD = @'
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-::Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
-Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-::Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
-Start /Wait PowerShell -NoL -C Import-Module OSD -Force
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1
+Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1 -CustomProfile Custom
 '@
 
+# OOBE.cmd opslaan op juiste locatie zodat deze uitgevoerd wordt
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
 
-# Reboot vanuit WinPE
-Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
-Start-Sleep -Seconds 20
+# Herstart uit WinPE zodat Windows installatie verdergaat
+Write-Host -ForegroundColor Green "Herstart in 15 seconden..."
+Start-Sleep -Seconds 15
 wpeutil reboot
