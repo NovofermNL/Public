@@ -1,7 +1,7 @@
 <#
 Scriptnaam: Deploy.ps1 
 Datum: 03-04-2025
-Beschrijving: Windows 11 24H2 installatie zonder
+Beschrijving: Windows 11 24H2 installatie 
 Auteur: Novoferm Nederland BV
 #>
 
