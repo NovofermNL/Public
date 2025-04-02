@@ -55,7 +55,7 @@ function Start-OOBEDeploy {
     #=================================================
     #   Custom Profile Sample Variables
     #=================================================
-if ($CustomProfile -eq 'Sample') {
+if ($CustomProfile -eq 'Custom') {
     $AddNetFX3 = $true
     $AddRSAT = $false
     $Autopilot = $false
