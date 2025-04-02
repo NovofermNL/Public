@@ -33,9 +33,9 @@ Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 
 $OOBECMD = @'
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
+::Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
+::Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
 Start /Wait PowerShell -NoL -C Import-Module OSD -Force
 Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1
 '@
