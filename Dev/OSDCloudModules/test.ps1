@@ -1,5 +1,21 @@
-# TLS 1.2 
+# TLS 1.2 for secure downloads
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Install and Import OSD Module (skip in WinPE)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
+    Install-Module OSD -Force
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
+}
+
+Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
+Import-Module OSD -Force
+
+# Start installatie van Windows 11
+Write-Host -ForegroundColor Cyan "Installatie van Windows 11 wordt gestart..."
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+
 
 #Regio Variabelen
 $appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI')
