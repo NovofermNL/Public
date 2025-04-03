@@ -28,4 +28,3 @@ Remove-AppxOnline -Name $appx2remove
 Write-Host -ForegroundColor Cyan "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) OSDCloudRE installatie is voltooid"
 
 Restart-Computer -Force
-$null = Stop-Transcript
