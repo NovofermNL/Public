@@ -12,21 +12,20 @@ if ($env:SystemDrive -ne "X:") {
 Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 
-#Regio Variabelen
-$appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI')
+#region Variabelen
+$appx2remove = @(
+    'OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI'
+)
 #endregion
 
-        # Start OSDCloud
-        Start-OSDCloud -OSLanguage de-de -OSBuild 24H2 -OSEdition Pro -OSLicense Retail -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
+# Start OSDCloud
+Start-OSDCloud -OSLanguage de-de -OSBuild 24H2 -OSEdition Pro -OSLicense Retail -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
 
-        #Verwijder APPX
-        Write-Host -ForegroundColor Gray "Even geduld, er wordt opgeruimd..."
-        Remove-AppxOnline -name $appx2remove
-                        
-        Write-Host -ForegroundColor Cyan "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) OSDCloudRE installatie is voltooid"
-    }
+# Verwijder APPX
+Write-Host -ForegroundColor Gray "Even geduld, er wordt opgeruimd..."
+Remove-AppxOnline -Name $appx2remove
 
-    Restart-Computer -force
-    $null = Stop-Transcript
-}
-#endregion
+Write-Host -ForegroundColor Cyan "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) OSDCloudRE installatie is voltooid"
+
+Restart-Computer -Force
+$null = Stop-Transcript
