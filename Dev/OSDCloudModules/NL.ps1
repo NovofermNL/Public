@@ -2,10 +2,10 @@
 ########## Novoferm Nederland W11-24h2 Deployment script ##########
 ###################################################################
 
-# TLS 1.2 
+# Forceer TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Installeer de OSD-module (alleen buiten WinPE)
+# Installeer de OSD-module (buiten WinPE)
 if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force
@@ -13,7 +13,7 @@ if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
-# Importeer de OSD-module
+# Importeer OSD-module
 try {
     Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
     Import-Module -Name OSD -Force 
@@ -23,13 +23,14 @@ catch {
     Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
     exit 1
 }
-#  ---------------------------------------------------------------------------
-#  Profile OSD OSDDeploy
-#  ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Profile OSD OSDDeploy
+# ---------------------------------------------------------------------------
 
 if ($CustomProfile -in 'OSD','OSDDeploy') {
     $AddNetFX3      = $true
-    $AddRSAT        = $False
+    $AddRSAT        = $true
     $Autopilot      = $false
     $UpdateDrivers  = $false
     $UpdateWindows  = $false
@@ -60,8 +61,13 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
         'Microsoft.ZuneMusic',
         'Microsoft.ZuneVideo'
     )
-    $SetEdition     = 'Enterprise'
+
+    # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
+    $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
+
+    $SetEdition = 'Enterprise'
 }
+
 # Start installatie van Windows 11 via OSDCloud
 Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
@@ -70,12 +76,25 @@ Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterp
 Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 
 $OOBECMD = @'
-Start /Wait PowerShell -NoL -C PowerShell Set-ExecutionPolicy ByPass -Force
-::Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
-:: Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-::Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
-::Start /Wait PowerShell -NoLogo -Command Import-Module OSD -Force
-Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy -Customprofile OSDDeploy
+@echo off
+PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
+
+:: Appx verwijderen op basis van lijst
+PowerShell -NoLogo -Command "& {
+    $apps = Get-Content 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
+    foreach ($app in $apps) {
+        Write-Host ('Verwijder Appx voor alle gebruikers: {0}' -f $app)
+        Get-AppxPackage -AllUsers -Name $app | Remove-AppxPackage -ErrorAction SilentlyContinue
+
+        Write-Host ('Verwijder Appx provisioned package: {0}' -f $app)
+        Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq $app | ForEach-Object {
+            Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue
+        }
+    }
+}"
+
+:: Daarna OOBEDeploy uitvoeren
+PowerShell -NoLogo -Command "Start-OOBEDeploy -CustomProfile OSDDeploy"
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
