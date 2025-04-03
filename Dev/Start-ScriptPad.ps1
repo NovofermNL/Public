@@ -10,4 +10,4 @@ Import-Module OSD -Force
 
 #Start OSDCloudScriptPad
 Write-Host -ForegroundColor Green "Start OSDPad"
-Start-OSDPad -RepoOwner NovofermNL -RepoName Public -RepoFolder Dev -BrandingTitle 'Novoferm Nederland BV'
+Start-OSDPad -RepoOwner NovofermNL -RepoName Public -RepoFolder Dev/OSDCloudModules -BrandingTitle 'Novoferm Nederland BV'
