@@ -50,7 +50,7 @@ function OSDCloudLogic {
     $OOBEDeployJson = @'
     {
         "Autopilot":  {
-                        "IsPresent":  true
+                        "IsPresent":  false
                     },
         "RemoveAppx":  [
                         "Microsoft.549981C3F5F10",
