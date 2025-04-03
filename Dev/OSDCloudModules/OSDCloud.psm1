@@ -132,7 +132,7 @@ function OSDCloudLogic {
     #================================================
     Write-Host -ForegroundColor Cyan "Create C:\Windows\System32\OOBE.cmd"
     $OOBE = @'
-PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
+PowerShell -NoLogo -Command Set-ExecutionPolicy Unrestricted -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoLogo -Command Install-Module OSD -Force
 Start /Wait PowerShell -NoLogo -Command Install-Module AutopilotOOBE -Force
