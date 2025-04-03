@@ -3,5 +3,5 @@ New-Item -Path "X:\Program Files\WindowsPowerShell\Modules\OSDCloudLogic" -ItemT
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/OSDCloud.psm1" -OutFile "X:\Program Files\WindowsPowerShell\Modules\OSDCloudLogic\OSDCloudLogic.psm1"
 Import-Module OSDCloudLogic.psm1 -Force
 
-Write-Host -ForegroundColor Green "Starting OSDCloud NL devices"
+Write-Host -ForegroundColor Green "Starting OSDClou"
 OSDCloudLogic -ComputerPrefix "NL"
