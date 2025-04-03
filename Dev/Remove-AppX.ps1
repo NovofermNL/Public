@@ -6,7 +6,7 @@
 #How To: Remove Appx Provisioned Packages by Match
 
 
-$RemoveAppx = "CommunicationsApps","OfficeHub","People","Skype","Solitaire","Xbox","ZuneMusic","ZuneVideo"
+$RemoveAppx = "CommunicationsApps","OfficeHub","People","Skype","Solitaire","Xbox","ZuneMusic","ZuneVideo","Outlook"
 foreach ($Item in $RemoveAppx) {
     Remove-AppxOnline -Name $Item -Verbose
 }
