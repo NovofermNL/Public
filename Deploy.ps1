@@ -32,7 +32,7 @@ Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterp
 Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 
 $OOBECMD = @'
-PowerShell -NoL -C Set-ExecutionPolicy ByPass -Force
+Start /Wait PowerShell -NoL -C PowerShell Set-ExecutionPolicy ByPass -Force
 ::Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
 ::Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
