@@ -80,10 +80,10 @@ function OSDCloudLogic {
                             "Microsoft.ZuneVideo"
                     ],
         "UpdateDrivers":  {
-                            "IsPresent":  true
+                            "IsPresent":  false
                         },
         "UpdateWindows":  {
-                            "IsPresent":  true
+                            "IsPresent":  false
                         }
     }
 '@
@@ -130,7 +130,7 @@ function OSDCloudLogic {
     #================================================
     #  [PostOS] AutopilotOOBE CMD Command Line
     #================================================
-    Write-Host -ForegroundColor Cyan "Create C:\Windows\System32\OOBE.cmd"
+    Write-Host -ForegroundColor Cyan "Create C:\Windows\System32\Scripts\OOBE.cmd"
     $OOBE = @'
 PowerShell -NoLogo -Command Set-ExecutionPolicy Unrestricted -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
@@ -144,7 +144,7 @@ Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
 Start /Wait PowerShell -NoLogo -Command Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1
 Start /Wait PowerShell -NoLogo -Command Restart-Computer -Force
 '@
-    $OOBE | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
+    $OOBE | Out-File -FilePath 'C:\Windows\System32\Scripts\OOBE.cmd' -Encoding ascii -Force
 
     #================================================
     #  [PostOS] SetupComplete CMD Command Line
