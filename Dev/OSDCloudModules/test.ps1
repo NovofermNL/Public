@@ -1,15 +1,7 @@
 # TLS 1.2 for secure downloads
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Install and Import OSD Module (skip in WinPE)
-if ($env:SystemDrive -ne "X:") {
-    Write-Host -ForegroundColor Green "Updating OSD PowerShell Module (buiten WinPE)"
-    Install-Module OSD -Force
-} else {
-    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module OSD wordt overgeslagen"
-}
-
-Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
+Install-Module OSD -Force
 Import-Module OSD -Force
 
 #region Variabelen
