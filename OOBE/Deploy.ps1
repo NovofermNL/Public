@@ -18,7 +18,7 @@ Import-Module OSD -Force
 # Profielinstellingen
 $CustomProfile = 'OSDDeploy'
 $AddNetFX3     = $true
-$AddRSAT       = $true
+$AddRSAT       = $false
 $Autopilot     = $false
 $UpdateDrivers = $false
 $UpdateWindows = $false
