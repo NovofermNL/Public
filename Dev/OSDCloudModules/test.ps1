@@ -1,9 +1,6 @@
 # TLS 1.2 for secure downloads
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-Install-Module OSD -Force
-Import-Module OSD -Force
-
 #region Variabelen
 $appx2remove = @(
     'OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI'
