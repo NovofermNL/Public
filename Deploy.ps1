@@ -37,7 +37,7 @@ Start /Wait PowerShell -NoL -C PowerShell Set-ExecutionPolicy ByPass -Force
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
 ::Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
 Start /Wait PowerShell -NoL -C Import-Module OSD -Force
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1 -CustomProfile Custom
+Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Start-OOBE-Deploy.ps1
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
