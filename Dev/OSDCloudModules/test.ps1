@@ -1,13 +1,9 @@
+# TLS 1.2 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 #Regio Variabelen
 $appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI')
 #endregion
-
-#region Initialiseren
-# Bepaal de Windows-fase (bijv. WinPE, OOBE, etc.)
-# Schrijf versie en fase naar console
-# Invoke-Expression regel is uitgeschakeld
-#endregion
-
 
         # Start OSDCloud
         Start-OSDCloud -OSLanguage de-de -OSBuild 24H2 -OSEdition Pro -OSLicense Retail -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
