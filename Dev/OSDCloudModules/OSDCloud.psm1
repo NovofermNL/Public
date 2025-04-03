@@ -52,102 +52,25 @@ catch {
     }
     Start-OSDCloud @Params
 
-    #================================================
-    #  [PostOS] OOBEDeploy Configuration
-    #================================================
-    Write-Host -ForegroundColor Cyan "Create C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json"
-    $OOBEDeployJson = @'
-    {
-        "Autopilot":  {
-                        "IsPresent":  false
-                    },
-        "RemoveAppx":  [
-                        "Microsoft.549981C3F5F10",
-                        "Microsoft.BingWeather",
-                        "Microsoft.GetHelp",
-                        "Microsoft.Getstarted",
-                        "Microsoft.Microsoft3DViewer",
-                        "Microsoft.MicrosoftOfficeHub",
-                        "Microsoft.MicrosoftSolitaireCollection",
-                        "Microsoft.MixedReality.Portal",
-                        "Microsoft.Office.OneNote",
-                        "Microsoft.People",
-                        "Microsoft.SkypeApp",
-                        "Microsoft.Wallet",
-                        "Microsoft.WindowsCamera",
-                        "microsoft.windowscommunicationsapps",
-                        "Microsoft.WindowsFeedbackHub",
-                        "Microsoft.WindowsMaps",
-                        "Microsoft.Xbox.TCUI",
-                        "Microsoft.XboxApp",
-                        "Microsoft.XboxGameOverlay",
-                        "Microsoft.XboxGamingOverlay",
-                        "Microsoft.XboxIdentityProvider",
-                        "Microsoft.XboxSpeechToTextOverlay",
-                        "Microsoft.YourPhone",
-                        "Microsoft.ZuneMusic",
-                        "Microsoft.ZuneVideo"
-                    ],
-        "UpdateDrivers":  {
-                            "IsPresent":  false
-                        },
-        "UpdateWindows":  {
-                            "IsPresent":  false
-                        }
-    }
-'@
-    If (!(Test-Path "C:\ProgramData\OSDeploy")) {
-        New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
-    }
-    $OOBEDeployJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
+ Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+Invoke-RestMethod https://raw.githubusercontent.com/AkosBakos/OSDCloud/main/Set-KeyboardLanguage.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\keyboard.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/AkosBakos/OSDCloud/main/Install-EmbeddedProductKey.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\productkey.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://check-autopilotprereq.osdcloud.ch | Out-File -FilePath 'C:\Windows\Setup\scripts\autopilotprereq.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://start-autopilotoobe.osdcloud.ch | Out-File -FilePath 'C:\Windows\Setup\scripts\autopilotoobe.ps1' -Encoding ascii -Force
 
-    #================================================
-    #  [PostOS] AutopilotOOBE Configuration Staging
-    #================================================
-    Write-Host -ForegroundColor Cyan "Create C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json"
-    Write-Host -ForegroundColor Gray "Define Computername"
-    $Serial = Get-WmiObject Win32_bios | Select-Object -ExpandProperty SerialNumber
-    $AssignedComputerName = $Serial.Substring(0,9)
-    Write-Host -ForegroundColor Green $AssignedComputerName
 
-    $AutopilotOOBEJson = @"
-    {
-        "Assign":  {
-                        "IsPresent":  false
-                    },
-        "GroupTag":  "$AssignedComputerName",
-        "AddToGroup": "GroupX",
-        "Hidden":  [
-                        "AssignedComputerName",
-                        "AssignedUser",
-                        "PostAction",
-                        "Assign"
-                    ],
-        "PostAction":  "Quit",
-        "Run":  "NetworkingWireless",
-        "Docs":  "https://google.com/",
-        "Title":  "Manual Autopilot Register"
-    }
-"@
-    If (!(Test-Path "C:\ProgramData\OSDeploy")) {
-        New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
-    }
-    $AutopilotOOBEJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json" -Encoding ascii -Force 
-    
-    #================================================
-    #  [PostOS] AutopilotOOBE CMD Command Line
-    #================================================
-    Write-Host -ForegroundColor Cyan "Create C:\Windows\System32\OOBE.cmd"
-    $OOBE = @'
-PowerShell -NoLogo -Command Set-ExecutionPolicy Unrestricted -Force
-Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
-Start /Wait PowerShell -NoLogo -Command Install-Module OSD -Force
-::Start /Wait PowerShell -NoLogo -Command Install-Module AutopilotOOBE -Force
-Start /Wait PowerShell -NoLogo -CommandInvoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Set-KeyboardLang.ps1
-Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
-Start /Wait PowerShell -NoLogo -Command Remove-AppxOnline /?
-::Start /Wait PowerShell -NoLogo -Command Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1
-Start /Wait PowerShell -NoLogo -Command Restart-Computer -Force
+$OOBECMD = @'
+@echo off
+# Execute OOBE Tasks
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\keyboard.ps1
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\productkey.ps1
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\autopilotprereq.ps1
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\Scripts\autopilotoobe.ps1
+
+# Below a PS session for debug and testing in system context, # when not needed 
+# start /wait powershell.exe -NoL -ExecutionPolicy Bypass
+
+exit 
 '@
     $OOBE | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
 
