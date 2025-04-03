@@ -23,15 +23,8 @@ $appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','Peopl
 
         # Start OSDCloud
         Start-OSDCloud -OSLanguage de-de -OSBuild 24H2 -OSEdition Pro -OSLicense Retail -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
-<#
-        ## Download Lenovo P1 driver en kopieer naar driver-map
-        $url = "https://download.lenovo.com/..."
-        $dest = "c:\Drivers\..."
-        Remove-Item -Path c:\Drivers\* -Force -recurse -ErrorAction SilentlyContinue
-        Write-Host 'Drivers voor Lenovo P1 worden gedownload. Even geduld...'
-        curl.exe $url -o $dest -s
-#>
-        Verwijder APPX
+
+        #Verwijder APPX
         Write-Host -ForegroundColor Gray "Even geduld, er wordt opgeruimd..."
         Remove-AppxOnline -name $appx2remove
                         
