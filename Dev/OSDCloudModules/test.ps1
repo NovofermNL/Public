@@ -19,7 +19,7 @@ $appx2remove = @(
 #endregion
 
 # Start OSDCloud
-Start-OSDCloud -OSLanguage nl-nl -OSBuild 24H2 -OSEdition Pro -OSLicense Retail -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
+Start-OSDCloud -OSLanguage nl-nl -OSBuild 24H2 -OSEdition 'Pro' -OSLicense 'Volume' -SkipODT -OSVersion 'Windows 11' -ZTI -SkipAutopilot
 
 # Verwijder APPX
 Write-Host -ForegroundColor Gray "Even geduld, er wordt opgeruimd..."
