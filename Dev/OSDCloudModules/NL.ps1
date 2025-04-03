@@ -1,3 +1,6 @@
+# TLS 1.2 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 Write-Host -ForegroundColor Green "Installeren van de  OSDCloudLogic Module"
 New-Item -Path "X:\Program Files\WindowsPowerShell\Modules\OSDCloudLogic" -ItemType Directory -Force | Out-Null
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/OSDCloud.psm1" -OutFile "X:\Program Files\WindowsPowerShell\Modules\OSDCloudLogic\OSDCloudLogic.psm1"
