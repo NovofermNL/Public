@@ -27,7 +27,7 @@ catch {
 
 if ($CustomProfile -in 'OSD','OSDDeploy') {
     $AddNetFX3      = $true
-    $AddRSAT        = $true
+    $AddRSAT        = $false
     $Autopilot      = $false
     $UpdateDrivers  = $false
     $UpdateWindows  = $false
