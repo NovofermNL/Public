@@ -4,27 +4,23 @@
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Installeer OSD-module (indien buiten WinPE wordt dit overgeslagen)
-if ($env:SystemDrive -ne "X:") {
-    Write-Host -ForegroundColor Green "Niet in WinPE – Install-Module OSD wordt overgeslagen"
-} else {
-    Write-Host -ForegroundColor Green "In WinPE – OSD-module wordt geladen"
+# Alleen in WinPE: OSD-module laden
+if ($env:SystemDrive -eq "X:") {
+    Write-Host -ForegroundColor Green "In WinPE – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force
+    Import-Module -Name OSD -Force
 }
-
-# Importeer module
-Import-Module OSD -Force
 
 # Profielinstellingen
 $CustomProfile = 'OSDDeploy'
 $AddNetFX3     = $true
-$AddRSAT       = $false
+$AddRSAT       = $true
 $Autopilot     = $false
 $UpdateDrivers = $false
 $UpdateWindows = $false
 $SetEdition    = 'Enterprise'
 
-# Apps om te verwijderen
+# Appx-lijst
 $RemoveAppx = @(
     'Microsoft.549981C3F5F10',
     'Microsoft.BingWeather',
@@ -53,23 +49,32 @@ $RemoveAppx = @(
     'Microsoft.ZuneVideo'
 )
 
-# Schrijf lijst naar JSON voor gebruik in OOBE-fase
-$RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
+# Schrijf lijst naar JSON-bestand
+$RemoveAppx | ConvertTo-Json | Out-File -FilePath 'C:\Windows\Temp\RemoveAppx.json' -Encoding ascii -Force
 
 # Start installatie van Windows 11 Enterprise NL-NL
+Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-# Genereer OOBE.cmd dat PostInstall.ps1 start
+# Download Remove-AppX.ps1 naar Setup-scriptlocatie
+Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
+
+# Genereer OOBE.cmd
 $OOBECMD = @'
 @echo off
-PowerShell -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Temp\PostInstall.ps1"
+:: Execute Appx-verwijdering
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Remove-AppX.ps1"
+
+:: Debug sessie in SYSTEM-context (optioneel)
+:: start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass
+
+exit
 '@
+
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
 
-# Download PostInstall.ps1 naar C:\Windows\Temp
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/OOBE/PostInstall.ps1" -OutFile "C:\Windows\Temp\PostInstall.ps1"
-
-# Herstart systeem
+# Reboot uit WinPE
 Write-Host "Herstart systeem in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
