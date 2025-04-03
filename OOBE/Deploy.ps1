@@ -24,7 +24,7 @@ $UpdateDrivers = $false
 $UpdateWindows = $false
 $SetEdition    = 'Enterprise'
 
-# Appx-lijst (één centrale plek)
+# Apps om te verwijderen
 $RemoveAppx = @(
     'Microsoft.549981C3F5F10',
     'Microsoft.BingWeather',
