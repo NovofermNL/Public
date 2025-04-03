@@ -53,7 +53,7 @@ catch {
     Start-OSDCloud @Params
 
  Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/refs/heads/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 
 $OOBECMD = @'
 @echo off
