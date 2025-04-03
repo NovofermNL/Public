@@ -8,7 +8,7 @@ Auteur: Novoferm Nederland BV
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $scriptName = "Remove-AppxApps"
-$logDir = "C:\script-logging\$scriptName"
+$logDir = "C:\windows\temp\$scriptName"
 if (!(Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
