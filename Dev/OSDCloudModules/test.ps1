@@ -12,11 +12,6 @@ if ($env:SystemDrive -ne "X:") {
 Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
 Import-Module OSD -Force
 
-# Start installatie van Windows 11
-Write-Host -ForegroundColor Cyan "Installatie van Windows 11 wordt gestart..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
-
-
 #Regio Variabelen
 $appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo','FeedbackHub','TCUI')
 #endregion
