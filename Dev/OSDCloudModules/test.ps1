@@ -23,10 +23,6 @@ $appx2remove = @('OneNote','BingWeather','CommunicationsApps','OfficeHub','Peopl
         Write-Host -ForegroundColor Gray "Even geduld, er wordt opgeruimd..."
         Remove-AppxOnline -name $appx2remove
                         
-        # Takenreeks voltooid
-        Write-Host -ForegroundColor Green "Alles klaar :-) // Verwijder nu de USB-stick en herstart de PC (sluit alle vensters)."
-        pause
-
         Write-Host -ForegroundColor Cyan "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) OSDCloudRE installatie is voltooid"
     }
 
