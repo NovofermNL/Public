@@ -2,13 +2,28 @@ function OSDCloudLogic {
     #================================================
     #   [PreOS] Update Module
     #================================================
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+# TLS 1.2 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    Write-Host -ForegroundColor Cyan "Updating OSD PowerShell Module"
-    Install-Module OSD -Force
+# Installeer de OSD-module (alleen buiten WinPE)
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
+    Install-Module -Name OSD -Force -Scope CurrentUser
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
+}
 
-    Write-Host -ForegroundColor Cyan "Importing OSD PowerShell Module"
-    Import-Module OSD -Force   
+# Importeer de OSD-module
+try {
+    Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
+    Import-Module -Name OSD -Force -ErrorAction Stop
+    Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
+}
+catch {
+    Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
+    exit 1
+}
+
 
     #=======================================================================
     #   [OS] Params and Start-OSDCloud
