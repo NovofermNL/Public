@@ -145,6 +145,7 @@ Start /Wait PowerShell -NoLogo -Command Install-Module OSD -Force
 ::Start /Wait PowerShell -NoLogo -Command Install-Module AutopilotOOBE -Force
 Start /Wait PowerShell -NoLogo -CommandInvoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Set-KeyboardLang.ps1
 Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
+Start /Wait PowerShell -NoLogo -Command Remove-AppxOnline /?
 ::Start /Wait PowerShell -NoLogo -Command Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1
 Start /Wait PowerShell -NoLogo -Command Restart-Computer -Force
 '@
