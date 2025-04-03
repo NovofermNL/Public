@@ -7,6 +7,9 @@ function OSDCloudLogic {
     #   [PreOS] Update Module
     #================================================
 
+# TLS 1.2 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
     Write-Host -ForegroundColor Cyan "Updating OSD PowerShell Module"
     Install-Module OSD -Force
 
