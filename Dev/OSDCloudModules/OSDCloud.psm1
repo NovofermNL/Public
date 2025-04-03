@@ -48,7 +48,7 @@ catch {
         OSEdition = "Pro"
         OSLanguage = "nl-nl"
         ZTI = $true
-        Firmware = $true
+        Firmware = $false
     }
     Start-OSDCloud @Params
 
@@ -142,10 +142,10 @@ catch {
 PowerShell -NoLogo -Command Set-ExecutionPolicy Unrestricted -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoLogo -Command Install-Module OSD -Force
-Start /Wait PowerShell -NoLogo -Command Install-Module AutopilotOOBE -Force
+::Start /Wait PowerShell -NoLogo -Command Install-Module AutopilotOOBE -Force
 Start /Wait PowerShell -NoLogo -CommandInvoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Set-KeyboardLang.ps1
 Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
-Start /Wait PowerShell -NoLogo -Command Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1
+::Start /Wait PowerShell -NoLogo -Command Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1
 Start /Wait PowerShell -NoLogo -Command Restart-Computer -Force
 '@
     $OOBE | Out-File -FilePath 'C:\Windows\System32\Scripts\OOBE.cmd' -Encoding ascii -Force
