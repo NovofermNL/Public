@@ -62,7 +62,6 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
     $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
 
-}
 
 Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
