@@ -1,4 +1,4 @@
-Eerst zeker weten dat de OSD-module geïmporteerd is
+#Eerst zeker weten dat de OSD-module geïmporteerd is
 Import-Module OSD -Force
 
 # Jouw bestaande array
