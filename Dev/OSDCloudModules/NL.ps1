@@ -60,7 +60,7 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
     )
 
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
-    $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\OSDCloud\Temp\RemoveAppx.json" -Encoding ascii -Force
+    $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
 
 }
 
