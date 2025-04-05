@@ -20,7 +20,7 @@ catch {
     Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
     exit 1
 }
-
+<#
 # ---------------------------------------------------------------------------
 # Profile OSD OSDDeploy
 # ---------------------------------------------------------------------------
@@ -61,33 +61,24 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
 
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
     $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
-
-
+#>
 Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-# Maak OOBE.cmd aan dat de Appx-lijst opnieuw inleest en gebruikt
-Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
+Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 
 $OOBECMD = @'
-Start /Wait PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
+@echo off
+# Execute OOBE Tasks
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\scripts\Remove-AppX.ps1
 
-$RemoveAppx = Get-Content -Path 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
+# Below a PS session for debug and testing in system context, # when not needed 
+# start /wait powershell.exe -NoL -ExecutionPolicy Bypass
 
-foreach ($App in $RemoveAppx) {
-    Write-Host "Verwijder Appx voor alle gebruikers: $App"
-    Get-AppxPackage -AllUsers -Name $App | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-    Write-Host "Verwijder Appx Provisioned Package: $App"
-    Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq $App | ForEach-Object {
-        Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue
-    }
-}
-
-Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy -CustomProfile OSDDeploy
+exit 
 '@
-
-$OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
+$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
