@@ -60,7 +60,7 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
     )
 
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
-    $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
+    $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\OSDCloud\Temp\RemoveAppx.json" -Encoding ascii -Force
 
 }
 
@@ -73,7 +73,6 @@ Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 $OOBECMD = @'
 Start /Wait PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
 
-# Lees app-lijst uit JSON bestand
 $RemoveAppx = Get-Content -Path 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
 
 foreach ($App in $RemoveAppx) {
@@ -86,7 +85,6 @@ foreach ($App in $RemoveAppx) {
     }
 }
 
-# Start aanvullende acties indien gewenst
 Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy -CustomProfile OSDDeploy
 '@
 
