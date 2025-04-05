@@ -64,8 +64,6 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
 
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
     $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
-
-    $SetEdition = 'Enterprise'
 }
 
 # Start installatie van Windows 11 via OSDCloud
