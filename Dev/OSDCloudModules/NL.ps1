@@ -73,7 +73,7 @@ Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 $OOBECMD = @'
 Start /Wait PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
 
-$RemoveAppx = Get-Content -Path 'C:\OSDCLoud\Temp\RemoveAppx.json' | ConvertFrom-Json
+$RemoveAppx = Get-Content -Path 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
 
 foreach ($App in $RemoveAppx) {
     Write-Host "Verwijder Appx voor alle gebruikers: $App"
