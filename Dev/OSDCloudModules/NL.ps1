@@ -72,6 +72,7 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/R
 $OOBECMD = @'
 @echo off
 :: Execute OOBE Tasks
+start /wait powershell.exe -NoL -ExecutionPolicy Bypass import-module OSD -force
 start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\scripts\Remove-AppX.ps1
 ::start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\scripts\CleanUp.ps1
 
