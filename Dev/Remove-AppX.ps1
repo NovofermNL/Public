@@ -1,4 +1,4 @@
-<## Eerst zeker weten dat de OSD-module geïmporteerd is
+Eerst zeker weten dat de OSD-module geïmporteerd is
 Import-Module OSD -Force
 
 # Jouw bestaande array
@@ -32,7 +32,8 @@ $RemoveAppx = @(
 
 # Voer de functie uit met de volledige lijst
 Remove-AppxOnline -Name $RemoveAppx
-#>
+
+<#
 Get-AppxPackage -AllUsers Clipchamp.Clipchamp | Remove-AppxPackage -AllUsers
 Get-AppxPackage -AllUsers Microsoft.549981C3F5F10 | Remove-AppxPackage -AllUsers
 Get-AppxPackage -AllUsers Microsoft.BingNews | Remove-AppxPackage -AllUsers
@@ -64,3 +65,4 @@ Get-AppxPackage -AllUsers Microsoft.ZuneMusic | Remove-AppxPackage -AllUsers
 Get-AppxPackage -AllUsers Microsoft.ZuneVideo | Remove-AppxPackage -AllUsers
 Get-AppxPackage -AllUsers MicrosoftCorporationII.QuickAssist | Remove-AppxPackage -AllUsers
 Get-AppxPackage -AllUsers MSTeams | Remove-AppxPackage -AllUsers
+#>
