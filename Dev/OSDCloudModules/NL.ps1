@@ -2,10 +2,8 @@
 ########## Novoferm Nederland W11-24h2 Deployment script ##########
 ###################################################################
 
-# Forceer TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Installeer de OSD-module (buiten WinPE)
 if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force
@@ -13,7 +11,6 @@ if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
-# Importeer OSD-module
 try {
     Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
     Import-Module -Name OSD -Force 
@@ -29,11 +26,11 @@ catch {
 # ---------------------------------------------------------------------------
 
 if ($CustomProfile -in 'OSD','OSDDeploy') {
-    $AddNetFX3      = $true
-    $AddRSAT        = $false
-    $Autopilot      = $false
-    $UpdateDrivers  = $false
-    $UpdateWindows  = $false
+  #  $AddNetFX3      = $true
+  #  $AddRSAT        = $false
+  #  $Autopilot      = $false
+  #  $UpdateDrivers  = $false
+  #  $UpdateWindows  = $false
     $RemoveAppx     = @(
         'Microsoft.549981C3F5F10',
         'Microsoft.BingWeather',
@@ -64,42 +61,39 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
 
     # Schrijf lijst naar JSON-bestand dat later gebruikt wordt door OOBE.cmd
     $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
+
+    $SetEdition = 'Enterprise'
 }
 
-# Start installatie van Windows 11 via OSDCloud
 Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
 Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
 
-# Maak OOBE.cmd voor automatische taken tijdens OOBE-fase
+# Maak OOBE.cmd aan dat de Appx-lijst opnieuw inleest en gebruikt
 Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
 
 $OOBECMD = @'
-@echo off
-PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
+Start /Wait PowerShell -NoLogo -Command "Set-ExecutionPolicy Bypass -Force"
 
-:: Appx verwijderen op basis van lijst
-PowerShell -NoLogo -Command "& {
-    $apps = Get-Content 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
-    foreach ($app in $apps) {
-        Write-Host ('Verwijder Appx voor alle gebruikers: {0}' -f $app)
-        Get-AppxPackage -AllUsers -Name $app | Remove-AppxPackage -ErrorAction SilentlyContinue
+# Lees app-lijst uit JSON bestand
+$RemoveAppx = Get-Content -Path 'C:\Windows\Temp\RemoveAppx.json' | ConvertFrom-Json
 
-        Write-Host ('Verwijder Appx provisioned package: {0}' -f $app)
-        Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq $app | ForEach-Object {
-            Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue
-        }
+foreach ($App in $RemoveAppx) {
+    Write-Host "Verwijder Appx voor alle gebruikers: $App"
+    Get-AppxPackage -AllUsers -Name $App | Remove-AppxPackage -ErrorAction SilentlyContinue
+
+    Write-Host "Verwijder Appx Provisioned Package: $App"
+    Get-AppxProvisionedPackage -Online | Where-Object DisplayName -eq $App | ForEach-Object {
+        Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName -ErrorAction SilentlyContinue
     }
-}"
+}
 
-:: Daarna OOBEDeploy uitvoeren
-PowerShell -NoLogo -Command "Install-Module -Name OSD -Force -Scope CurrentUser -AllowClobber -Repository PSGallery"
-PowerShell -NoLogo -Command "Import-Module -Name OSD -Force"
-PowerShell -NoLogo -Command "Start-OOBEDeploy -CustomProfile OSDDeploy"
+# Start aanvullende acties indien gewenst
+Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy -CustomProfile OSDDeploy
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
 
-# Reboot vanuit WinPE
+# Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
