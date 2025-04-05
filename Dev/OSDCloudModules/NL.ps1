@@ -92,6 +92,8 @@ PowerShell -NoLogo -Command "& {
 }"
 
 :: Daarna OOBEDeploy uitvoeren
+PowerShell -NoLogo -Command "Install-Module -Name OSD -Force -Scope CurrentUser -AllowClobber -Repository PSGallery"
+PowerShell -NoLogo -Command "Import-Module -Name OSD -Force"
 PowerShell -NoLogo -Command "Start-OOBEDeploy -CustomProfile OSDDeploy"
 '@
 
