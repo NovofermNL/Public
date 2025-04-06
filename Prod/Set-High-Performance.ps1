@@ -1,8 +1,6 @@
 <#
 Scriptnaam: Enable-HighPerformance.ps1
 Beschrijving: Dupliceert en activeert het High Performance energieplan
-Datum: 25-03-2025
-Auteur: Novoferm Nederland BV
 #>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
