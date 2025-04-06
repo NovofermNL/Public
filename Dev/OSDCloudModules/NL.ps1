@@ -72,12 +72,8 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/R
 
 $OOBECMD = @'
 @echo off
-:: Execute OOBE Tasks
-:: start /wait powershell.exe -NoL -ExecutionPolicy Bypass
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass import-module OSD -force
-start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\scripts\Remove-AppX.ps1
-::start /wait powershell.exe -NoL -ExecutionPolicy Bypass -F C:\Windows\Setup\scripts\CleanUp.ps1
-exit 
+:: OOBE fase – verwijder standaard apps
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
