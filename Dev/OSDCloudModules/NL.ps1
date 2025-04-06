@@ -64,7 +64,7 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
 #>
 
 Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -zti
 
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
 
