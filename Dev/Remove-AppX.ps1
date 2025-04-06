@@ -1,3 +1,4 @@
+# Verwijder standaard ingebouwde apps uit het Windows image (provisioned packages)
 $RemoveAppx = @(
     "Clipchamp.Clipchamp"
     "Microsoft.BingNews"
@@ -28,5 +29,5 @@ $RemoveAppx = @(
 
 foreach ($App in $RemoveAppx) {
     Write-Host "Verwijderen: $App"
-    Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -eq $App} | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+    Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $App } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
 }
