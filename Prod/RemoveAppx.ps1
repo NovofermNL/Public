@@ -23,8 +23,6 @@ $RemoveAppx = @(
     "Microsoft.XboxSpeechToTextOverlay"
     "Microsoft.YourPhone"
     "Microsoft.ZuneMusic"
-    "MicrosoftWindows.Client.WebExperience"
-    "MSTeams"
 )
 
 foreach ($App in $RemoveAppx) {
