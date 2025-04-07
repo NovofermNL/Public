@@ -33,11 +33,9 @@ $OSLanguage = 'nl-nl'
 $Global:MyOSDCloud = [ordered]@{
     Restart = [bool]$False
     RecoveryPartition = [bool]$true
-    OEMActivation = [bool]$True
     WindowsUpdate = [bool]$true
     WindowsUpdateDrivers = [bool]$false
     WindowsDefenderUpdate = [bool]$false
-    SetTimeZone = [bool]$False
     ClearDiskConfirm = [bool]$False
     }
 
