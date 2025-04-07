@@ -24,7 +24,7 @@ catch {
 #Variables to define the Windows OS / Edition etc to be applied during OSDCloud
 $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
-$OSName = 'Windows 11 22H2 x64'
+$OSName = 'Windows 11 24H2 x64'
 $OSEdition = 'Enterprise'
 $OSActivation = 'Volume'
 $OSLanguage = 'nl-nl'
