@@ -20,6 +20,34 @@ catch {
     Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
     exit 1
 }
+
+#Variables to define the Windows OS / Edition etc to be applied during OSDCloud
+$OSVersion = 'Windows 11'
+$OSReleaseID = '24H2'
+$OSName = 'Windows 11 22H2 x64'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
+$OSLanguage = 'nl-nl'
+
+#Set OSDCloud Vars
+$Global:MyOSDCloud = [ordered]@{
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    OEMActivation = [bool]$True
+    WindowsUpdate = [bool]$false
+    WindowsUpdateDrivers = [bool]$false
+    WindowsDefenderUpdate = [bool]$false
+    SetTimeZone = [bool]$False
+    ClearDiskConfirm = [bool]$False
+    }
+
+#write variables to console
+$Global:MyOSDCloud
+
+#Launch OSDCloud
+Write-Host "Starting OSDCloud" -ForegroundColor Green
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
 <#
 # ---------------------------------------------------------------------------
 # Profile OSD OSDDeploy
@@ -63,8 +91,7 @@ if ($CustomProfile -in 'OSD','OSDDeploy') {
     $RemoveAppx | ConvertTo-Json | Out-File -FilePath "C:\Windows\Temp\RemoveAppx.json" -Encoding ascii -Force
 #>
 
-Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -zti
+
 
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
 
