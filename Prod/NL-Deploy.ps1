@@ -22,8 +22,33 @@ catch {
     exit 1
 }
 
-Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -zti
+#Variables bepalen welke windows versie wordt geinstalleerd. 
+$OSVersion = 'Windows 11'
+$OSReleaseID = '24H2'
+$OSName = 'Windows 11 24H2 x64'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
+$OSLanguage = 'nl-nl'
+
+#Set OSDCloud Vars
+$Global:MyOSDCloud = [ordered]@{
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    WindowsUpdate = [bool]$true # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
+    WindowsUpdateDrivers = [bool]$false # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
+    WindowsDefenderUpdate = [bool]$false # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
+    ClearDiskConfirm = [bool]$False
+    }
+
+#write variables to console
+$Global:MyOSDCloud
+
+#Launch OSDCloud
+Write-Host "Starting OSDCloud" -ForegroundColor Green
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
+#Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
+#Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -zti
 
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
 
