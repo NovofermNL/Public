@@ -52,10 +52,19 @@ $OOBECMD = @'
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-:: OOBE fase – Opruimen OSDCloud Files
-::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
 '@
+
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
+
+# SetupComplete – wordt uitgevoerd vóór eerste login
+$SetupComplete = @'
+@echo off
+:: Laatste opruimtaken vóór eerste login
+powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
+exit /b 0
+'@
+
+$SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
