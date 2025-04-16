@@ -22,6 +22,14 @@ catch {
     exit 1
 }
 
+#Set OSDCloud Vars
+ $Global:MyOSDCloud = [ordered]@{
+     ClearDiskConfirm = [bool]$False
+     }
+ 
+ #write variables to console
+ $Global:MyOSDCloud
+
 #Variables bepalen welke windows versie wordt geinstalleerd. 
 $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
