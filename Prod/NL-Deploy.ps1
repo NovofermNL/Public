@@ -30,19 +30,6 @@ $OSEdition = 'Enterprise'
 $OSActivation = 'Volume'
 $OSLanguage = 'nl-nl'
 
-#Set OSDCloud Vars
-$Global:MyOSDCloud = [ordered]@{
-    Restart = [bool]$False
-    RecoveryPartition = [bool]$true
-    WindowsUpdate = [bool]$true # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
-    WindowsUpdateDrivers = [bool]$false # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
-    WindowsDefenderUpdate = [bool]$false # Wanneer deze op true staat neemt de installatie meer tijd in beslag ivm met het updaten van OS. Voor testdoeleneinde deze uitschakalen.
-    ClearDiskConfirm = [bool]$False
-    }
-
-#write variables to console
-$Global:MyOSDCloud
-
 #Launch OSDCloud
 Write-Host "Starting OSDCloud" -ForegroundColor Green
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
@@ -66,19 +53,9 @@ start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setu
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 :: OOBE fase – Opruimen OSDCloud Files
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
-:: OOBE fase – Reboot
-Start /Wait PowerShell -NoL -C Restart-Computer -Force
+::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
-
-    #================================================
-    #  [PostOS] SetupComplete CMD Command Line
-    #================================================
-    Write-Host -ForegroundColor Cyan "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
-    $SetupCompleteCMD = @'
-'@
-    $SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Width 2000 -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
