@@ -28,6 +28,12 @@ $Params = @{
 Start-OSDCloud @Params
 
 #================================================
+#  [PostOS] Extra Scripts Downloaden (Copy-Start)
+#================================================
+Write-Host -ForegroundColor Green "Download Copy-Start.ps1 vanuit GitHub"
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\Scripts\Copy-Start.ps1' -Encoding ascii -Force
+
+#================================================
 #  [PostOS] OOBEDeploy Configuration
 #================================================
 Write-Host -ForegroundColor Green "Create C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json"
@@ -115,6 +121,7 @@ PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
+Start /Wait PowerShell -NoL -C C:\Windows\Setup\Scripts\Copy-Start.ps1
 Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
 Start /Wait PowerShell -NoL -C Restart-Computer -Force
