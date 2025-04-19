@@ -1,37 +1,52 @@
-Write-Host  -ForegroundColor Cyan 'Windows 11 24H2 Pro Autopilot nl-nl'
+###################################################################
+########## Novoferm Nederland W11-24h2 Deployment script ##########
+###################################################################
 
-#================================================
-#   [PreOS] Update Module
-#================================================
-if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host  -ForegroundColor Green "Setting Display Resolution to 1600x"
-    Set-DisRes 1600
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
+    Install-Module -Name OSD -Force
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
-Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
-Install-Module OSD -Force
-
-Write-Host -ForegroundColor Green "Importing OSD PowerShell Module"
-Import-Module OSD -Force   
-
-#=======================================================================
-#   [OS] Params and Start-OSDCloud
-#=======================================================================
-$Params = @{
-    OSVersion = "Windows 11"
-    OSBuild = "24H2"
-    OSEdition = "Enterprise"
-    OSLanguage = "nl-nl"
-    OSLicense = "Volume"
-    ZTI = $true
+try {
+    Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
+    Import-Module -Name OSD -Force 
+    Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
 }
-Start-OSDCloud @Params
+catch {
+    Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
+    exit 1
+}
+
+#Set OSDCloud Vars
+ $Global:MyOSDCloud = [ordered]@{
+     ClearDiskConfirm = [bool]$False
+     }
+ 
+ #write variables to console
+ $Global:MyOSDCloud
+
+#Variables bepalen welke windows versie wordt geinstalleerd. 
+$OSVersion = 'Windows 11'
+$OSReleaseID = '24H2'
+$OSName = 'Windows 11 24H2 x64'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
+$OSLanguage = 'nl-nl'
+
+#Launch OSDCloud
+Write-Host "Starting OSDCloud" -ForegroundColor Green
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
 #================================================
 #  [PostOS] Extra Scripts Downloaden (Copy-Start)
 #================================================
 Write-Host -ForegroundColor Green "Download Copy-Start.ps1 vanuit GitHub"
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\Scripts\Copy-Start.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\Scripts\Copy-Start.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
 
 #================================================
 #  [PostOS] OOBEDeploy Configuration
@@ -119,12 +134,11 @@ Write-Host -ForegroundColor Green "Create C:\Windows\Setup\Scripts\OOBE.cmd"
 $OOBECMD = @'
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
-Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
-Start /Wait PowerShell -NoL -C C:\Windows\Setup\Scripts\Copy-Start.ps1
-Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
+Start /Wait PowerShell -NoL -C Import-Module OSD -Force
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
-Start /Wait PowerShell -NoL -C Restart-Computer -Force
+Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
 '@
 If (!(Test-Path "C:\Windows\Setup\Scripts")) {
     New-Item "C:\Windows\Setup\Scripts" -ItemType Directory -Force | Out-Null
@@ -134,14 +148,15 @@ $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Encoding asci
 #================================================
 #  [PostOS] SetupComplete CMD Command Line
 #================================================
-Write-Host -ForegroundColor Green "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
-$SetupCompleteCMD = @'
+# SetupComplete – wordt uitgevoerd vóór eerste login
+$SetupComplete = @'
 @echo off
-call C:\Windows\Setup\Scripts\OOBE.cmd
-RD C:\OSDCloud\OS /S /Q
-RD C:\Drivers /S /Q
+:: Laatste opruimtaken vóór eerste login
+powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
+exit /b 0
 '@
-$SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Force
+
+$SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
 
 #=======================================================================
 #   Restart-Computer
