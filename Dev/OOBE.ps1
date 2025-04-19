@@ -1,72 +1,142 @@
-###################################################################
-########## Novoferm Nederland W11-24h2 Deployment script ##########
-###################################################################
+Write-Host  -ForegroundColor Cyan 'Windows 11 24H2 Pro Autopilot en-US'
+#================================================
+#   [PreOS] Update Module
+#================================================
+if ((Get-MyComputerModel) -match 'Virtual') {
+    Write-Host  -ForegroundColor Green "Setting Display Resolution to 1600x"
+    Set-DisRes 1600
+}
 
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
+Install-Module OSD -Force
 
-function Start-WindowsInstall {
-    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
-    if ($env:SystemDrive -ne "X:") {
-        Install-Module -Name OSD -Force
-    } else {
-        Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
-    }
+Write-Host  -ForegroundColor Green "Importing OSD PowerShell Module"
+Import-Module OSD -Force   
 
-    try {
-        Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
-        Import-Module -Name OSD -Force 
-        Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
-    }
-    catch {
-        Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
-        exit 1
-    }
+#=======================================================================
+#   [OS] Params and Start-OSDCloud
+#=======================================================================
+$Params = @{
+    OSVersion = "Windows 11"
+    OSBuild = "24H2"
+    OSEdition = "Enterprise"
+    OSLanguage = "nl-nl"
+    OSLicense = "Volume"
+    ZTI = $true
+}
+Start-OSDCloud @Params
 
-    Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-    Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume -zti
-
-    Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
-
-    Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
-    Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
-    Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
-    #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
-
-    $OOBECMD = @'
-@echo off
-:: OOBE fase – verwijder standaard apps
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+#================================================
+#  [PostOS] OOBEDeploy Configuration
+#================================================
+Write-Host -ForegroundColor Green "Create C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json"
+$OOBEDeployJson = @'
+{
+    "Autopilot":  {
+                      "IsPresent":  false
+                  },
+    "AddNetFX3":  {
+                      "IsPresent":  true
+                    },                     
+    "RemoveAppx":  [
+                        "Clipchamp.Clipchamp"
+                        "Microsoft.BingNews"
+                        "Microsoft.BingSearch"
+                        "Microsoft.BingWeather"
+                        "Microsoft.GamingApp"
+                        "Microsoft.GetHelp"
+                        "Microsoft.MicrosoftOfficeHub"
+                        "Microsoft.MicrosoftSolitaireCollection"
+                        "Microsoft.MicrosoftStickyNotes"
+                        "Microsoft.OutlookForWindows"
+                        "Microsoft.PowerAutomateDesktop"
+                        "Microsoft.Todos"
+                        "Microsoft.Windows.DevHome"
+                        "Microsoft.WindowsAlarms"
+                        "Microsoft.WindowsFeedbackHub"
+                        "Microsoft.WindowsSoundRecorder"
+                        "Microsoft.WindowsTerminal"
+                        "Microsoft.Xbox.TCUI"
+                        "Microsoft.XboxGamingOverlay"
+                        "Microsoft.XboxIdentityProvider"
+                        "Microsoft.XboxSpeechToTextOverlay"
+                        "Microsoft.YourPhone"
+                        "Microsoft.ZuneMusic"
+                   ],
+    "UpdateDrivers":  {
+                          "IsPresent":  true
+                      },
+    "UpdateWindows":  {
+                          "IsPresent":  true
+                      }
+}
 '@
-    $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
-
-    Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
-    Start-Sleep -Seconds 20
-    wpeutil reboot
+If (!(Test-Path "C:\ProgramData\OSDeploy")) {
+    New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
 }
+$OOBEDeployJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
 
-function Start-HardwareHashUpload {
-    Write-Host -ForegroundColor Cyan "Start Auto-Upload Hardware Hash script..."
-    Start-Process -FilePath " X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Wait
-    Write-Host -ForegroundColor Cyan "Script uitgevoerd. Systeem wordt afgesloten..."
-    Stop-Computer -Force
+#================================================
+#  [PostOS] AutopilotOOBE Configuration Staging
+#================================================
+Write-Host -ForegroundColor Green "Create C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json"
+$AutopilotOOBEJson = @'
+{
+	"Assign": {
+		"IsPresent": true
+	},
+	"GroupTag": "Office",
+	"GroupTagOptions": [
+		"Office",
+		"Production"
+	],
+	"Hidden": [
+		"AssignedComputerName",
+		"AssignedUser",
+		"PostAction",
+		"Assign",
+		"AddToGroup"
+	],
+	"PostAction": "Quit",
+	"Run": "NetworkingWireless",
+	"Docs": "https://google.com/",
+	"Title": "Moelven Autopilot Registration"
 }
-
-# HOOFDMENU
-Clear-Host
-Write-Host ""
-Write-Host "Selecteer een optie:" -ForegroundColor Yellow
-Write-Host "1. Windows 11 Installeren" -ForegroundColor Green
-Write-Host "2. Hardware Hash Uploaden naar Intune" -ForegroundColor Cyan
-Write-Host ""
-
-$keuze = Read-Host "Voer uw keuze in (1 of 2)"
-
-switch ($keuze) {
-    '1' { Start-WindowsInstall }
-    '2' { Start-HardwareHashUpload }
-    default {
-        Write-Host -ForegroundColor Red "Ongeldige keuze. Script wordt beëindigd."
-        exit 1
-    }
+'@
+If (!(Test-Path "C:\ProgramData\OSDeploy")) {
+    New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
 }
+$AutopilotOOBEJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json" -Encoding ascii -Force
+
+
+#================================================
+#  [PostOS] AutopilotOOBE CMD Command Line
+#================================================
+Write-Host -ForegroundColor Green "Create C:\Windows\System32\OOBE.cmd"
+$OOBECMD = @'
+PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
+Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
+Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
+Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
+Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
+Start /Wait PowerShell -NoL -C Start-OOBEDeploy
+Start /Wait PowerShell -NoL -C Restart-Computer -Force
+'@
+$OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
+
+#================================================
+#  [PostOS] SetupComplete CMD Command Line
+#================================================
+Write-Host -ForegroundColor Green "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
+$SetupCompleteCMD = @'
+RD C:\OSDCloud\OS /S /Q
+RD C:\Drivers /S /Q
+'@
+$SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Force
+
+#=======================================================================
+#   Restart-Computer
+#=======================================================================
+Write-Host "Restarting in 20 seconds!" -ForegroundColor Green
+Start-Sleep -Seconds 20
+wpeutil reboot
