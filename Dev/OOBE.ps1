@@ -1,3 +1,5 @@
+Write-Host  -ForegroundColor Cyan 'Windows 11 24H2 Pro Autopilot nl-nl'
+
 ###################################################################
 ########## Novoferm Nederland W11-24h2 Deployment script ##########
 ###################################################################
@@ -19,34 +21,26 @@ try {
 catch {
     Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
     exit 1
+}   
+
+#=======================================================================
+#   [OS] Params and Start-OSDCloud
+#=======================================================================
+$Params = @{
+    OSVersion = "Windows 11"
+    OSBuild = "24H2"
+    OSEdition = "Enterprise"
+    OSLanguage = "nl-nl"
+    OSLicense = "Volume"
+    ZTI = $true
 }
-
-#Set OSDCloud Vars
- $Global:MyOSDCloud = [ordered]@{
-     ClearDiskConfirm = [bool]$False
-     }
- 
- #write variables to console
- $Global:MyOSDCloud
-
-#Variables bepalen welke windows versie wordt geinstalleerd. 
-$OSVersion = 'Windows 11'
-$OSReleaseID = '24H2'
-$OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Enterprise'
-$OSActivation = 'Volume'
-$OSLanguage = 'nl-nl'
-
-#Launch OSDCloud
-Write-Host "Starting OSDCloud" -ForegroundColor Green
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+Start-OSDCloud @Params
 
 #================================================
 #  [PostOS] Extra Scripts Downloaden (Copy-Start)
 #================================================
 Write-Host -ForegroundColor Green "Download Copy-Start.ps1 vanuit GitHub"
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\Scripts\Copy-Start.ps1' -Encoding ascii -Force
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\Scripts\Copy-Start.ps1' -Encoding ascii -Force
 
 #================================================
 #  [PostOS] OOBEDeploy Configuration
@@ -136,9 +130,12 @@ PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
 Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
 Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
 Start /Wait PowerShell -NoL -C Import-Module OSD -Force
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
+Start /Wait PowerShell -NoL -C Import-Module AutopilotOOBE -Force
+Start /Wait PowerShell -NoL -C C:\Windows\Setup\Scripts\Copy-Start.ps1
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
 Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
+Start /Wait PowerShell -NoL -C Restart-Computer -Force
 '@
 If (!(Test-Path "C:\Windows\Setup\Scripts")) {
     New-Item "C:\Windows\Setup\Scripts" -ItemType Directory -Force | Out-Null
@@ -148,15 +145,14 @@ $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Encoding asci
 #================================================
 #  [PostOS] SetupComplete CMD Command Line
 #================================================
-# SetupComplete – wordt uitgevoerd vóór eerste login
-$SetupComplete = @'
+Write-Host -ForegroundColor Green "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
+$SetupCompleteCMD = @'
 @echo off
-:: Laatste opruimtaken vóór eerste login
-powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
-exit /b 0
+call C:\Windows\Setup\Scripts\OOBE.cmd
+RD C:\OSDCloud\OS /S /Q
+RD C:\Drivers /S /Q
 '@
-
-$SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
+$SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Force
 
 #=======================================================================
 #   Restart-Computer
