@@ -36,6 +36,8 @@ $Global:oobeCloud = @{
     oobeUpdateWindows = $true
 }
 
+Write-Output $Global:MyOSDCloud
+
 #=======================================================================
 #   Start OSDCloud met parameters
 #=======================================================================
@@ -48,6 +50,60 @@ $OSLanguage = 'nl-nl'
 
 Write-Host "Starting OSDCloud" -ForegroundColor Green
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
+#================================================
+#  [PostOS] OOBEDeploy Configuration
+#================================================
+Write-Host -ForegroundColor Green "Create C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json"
+$OOBEDeployJson = @'
+{
+    "AddNetFX3":  {
+                      "IsPresent":  true
+                  },
+    "Autopilot":  {
+                      "IsPresent":  true
+                  },
+    "RemoveAppx":  [
+                    "MicrosoftTeams",
+                    "Microsoft.BingWeather",
+                    "Microsoft.BingNews",
+                    "Microsoft.GamingApp",
+                    "Microsoft.GetHelp",
+                    "Microsoft.Getstarted",
+                    "Microsoft.Messaging",
+                    "Microsoft.MicrosoftOfficeHub",
+                    "Microsoft.MicrosoftSolitaireCollection",
+                    "Microsoft.MicrosoftStickyNotes",
+                    "Microsoft.MSPaint",
+                    "Microsoft.People",
+                    "Microsoft.PowerAutomateDesktop",
+                    "Microsoft.StorePurchaseApp",
+                    "Microsoft.Todos",
+                    "microsoft.windowscommunicationsapps",
+                    "Microsoft.WindowsFeedbackHub",
+                    "Microsoft.WindowsMaps",
+                    "Microsoft.WindowsSoundRecorder",
+                    "Microsoft.Xbox.TCUI",
+                    "Microsoft.XboxGameOverlay",
+                    "Microsoft.XboxGamingOverlay",
+                    "Microsoft.XboxIdentityProvider",
+                    "Microsoft.XboxSpeechToTextOverlay",
+                    "Microsoft.YourPhone",
+                    "Microsoft.ZuneMusic",
+                    "Microsoft.ZuneVideo"
+                   ],
+    "UpdateDrivers":  {
+                          "IsPresent":  true
+                      },
+    "UpdateWindows":  {
+                          "IsPresent":  true
+                      }
+}
+'@
+If (!(Test-Path "C:\ProgramData\OSDeploy")) {
+    New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
+}
+$OOBEDeployJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
 
 #=======================================================================
 #   Scripts en Configuratie downloaden
@@ -112,6 +168,7 @@ $OOBECMD = @'
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
@@ -134,9 +191,10 @@ Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
 
+<#
 #=======================================================================
 #   OOBE functies uitvoeren
 #=======================================================================
 Step-oobeUpdateDrivers
 Step-oobeUpdateWindows
-
+#>
