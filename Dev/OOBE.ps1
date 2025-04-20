@@ -28,47 +28,13 @@ $Product = (Get-MyComputerProduct)
 $Model = (Get-MyComputerModel)
 $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 
-#=======================================================================
-#   OSDCLOUD VARS
-#=======================================================================
-#Set OSDCloud Vars
-$Global:MyOSDCloud = [ordered]@{
-    Restart = [bool]$False
-    RecoveryPartition = [bool]$true
-    OEMActivation = [bool]$True
-    WindowsUpdate = [bool]$true
-    WindowsUpdateDrivers = [bool]$true
-    WindowsDefenderUpdate = [bool]$true
-    SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$False
-    ShutdownSetupComplete = [bool]$false
-    SyncMSUpCatDriverUSB = [bool]$true
-    CheckSHA1 = [bool]$true
+#=================================================
+#   oobeCloud Settings
+#=================================================
+$Global:oobeCloud = @{
+    oobeUpdateDrivers = $true
+    oobeUpdateWindows = $true
 }
-
-#=======================================================================
-#   Driver Pack Logica
-#=======================================================================
-$DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion 'Windows 11' -OSReleaseID '24H2'
-if ($DriverPack) {
-    $Global:MyOSDCloud.DriverPackName = $DriverPack.Name
-}
-
-$UseHPIA = $true
-if ($Manufacturer -match "HP" -and $UseHPIA) {
-    $Global:MyOSDCloud.HPTPMUpdate = $true
-    $Global:MyOSDCloud.HPIAALL = $true
-    $Global:MyOSDCloud.HPBIOSUpdate = $true
-    $Global:MyOSDCloud.HPCMSLDriverPackLatest = $true
-}
-
-if ($Manufacturer -match "HP") {
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force 
-    Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force
-    Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck
-}
-
-Write-Output $Global:MyOSDCloud
 
 #=======================================================================
 #   Start OSDCloud met parameters
@@ -95,8 +61,51 @@ Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Wi
 Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
 #=======================================================================
-#   OOBE.cmd aanmaken
+#   OOBE Functionaliteiten
 #=======================================================================
+function Step-oobeUpdateDrivers {
+    [CmdletBinding()]
+    param ()
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeUpdateDrivers -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Updating Windows Drivers'
+        if (!(Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore)) {
+            try {
+                Install-Module PSWindowsUpdate -Force
+                Import-Module PSWindowsUpdate -Force
+            } catch {
+                Write-Warning 'Unable to install PSWindowsUpdate Driver Updates'
+            }
+        }
+        if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+            Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -UpdateType Driver -AcceptAll -IgnoreReboot" -Wait
+        }
+    }
+}
+function Step-oobeUpdateWindows {
+    [CmdletBinding()]
+    param ()
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeUpdateWindows -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Updating Windows'
+        if (!(Get-Module PSWindowsUpdate -ListAvailable)) {
+            try {
+                Install-Module PSWindowsUpdate -Force
+                Import-Module PSWindowsUpdate -Force
+            } catch {
+                Write-Warning 'Unable to install PSWindowsUpdate Windows Updates'
+            }
+        }
+        if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+            Add-WUServiceManager -MicrosoftUpdate -Confirm:$false | Out-Null
+            #Write-Host -ForegroundColor DarkCyan 'Install-WindowsUpdate -UpdateType Software -AcceptAll -IgnoreReboot'
+            #Install-WindowsUpdate -UpdateType Software -AcceptAll -IgnoreReboot -NotTitle 'Malicious'
+            #Write-Host -ForegroundColor DarkCyan 'Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot'
+            #Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview' -NotKBArticleID 'KB890830','KB5005463','KB4481252'" -Wait
+            Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview'" -Wait
+
+        }
+    }
+}
+
 $OOBECMD = @'
 @echo off
 :: OOBE fase – verwijder standaard apps
@@ -104,6 +113,7 @@ start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setu
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 '@
+
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
 #=======================================================================
@@ -123,3 +133,10 @@ $SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd'
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
+
+#=======================================================================
+#   OOBE functies uitvoeren
+#=======================================================================
+Step-oobeUpdateDrivers
+Step-oobeUpdateWindows
+
