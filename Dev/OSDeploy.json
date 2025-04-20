@@ -29,7 +29,7 @@ $OOBEDeployJson = @'
                     "Microsoft.XboxIdentityProvider",
                     "Microsoft.XboxSpeechToTextOverlay",
                     "Microsoft.YourPhone",
-                    "Microsoft.ZuneMusic",
+                    "Microsoft.ZuneMusic"
                    ],
     "UpdateDrivers":  {
                           "IsPresent":  true
