@@ -165,10 +165,16 @@ function Step-oobeUpdateWindows {
 $OOBECMD = @'
 @echo off
 :: OOBE fase – verwijder standaard apps
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
+::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 :: OOBE fase – Aanpassen Start Menu
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
+::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+::Start /Wait PowerShell -NoLogo -Command Start-OOBEDeploy
+PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
+Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
+Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
+Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
+Start /Wait PowerShell -NoL -C Start-AutopilotOOBE
+Start /Wait PowerShell -NoL -C Start-OOBEDeploy
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
