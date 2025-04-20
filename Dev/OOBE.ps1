@@ -31,20 +31,19 @@ $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 #=======================================================================
 #   OSDCLOUD VARS
 #=======================================================================
+#Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
-    Restart               = [bool]$false
-    RecoveryPartition     = [bool]$true
-    OEMActivation         = [bool]$false 
-    WindowsUpdate         = [bool]$true
-    MSCatalogFirmware     = [bool]$true
-    WindowsUpdateDrivers  = [bool]$true
-    WindowsDefenderUpdate = [bool]$false
-    SetTimeZone           = [bool]$true
-    SkipClearDisk         = [bool]$false
-    ClearDiskConfirm      = [bool]$false
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    OEMActivation = [bool]$True
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$true
+    WindowsDefenderUpdate = [bool]$true
+    SetTimeZone = [bool]$true
+    ClearDiskConfirm = [bool]$False
     ShutdownSetupComplete = [bool]$false
-    SyncMSUpCatDriverUSB  = [bool]$true
-    CheckSHA1             = [bool]$true
+    SyncMSUpCatDriverUSB = [bool]$true
+    CheckSHA1 = [bool]$true
 }
 
 #=======================================================================
