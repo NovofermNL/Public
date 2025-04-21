@@ -28,15 +28,15 @@ $Product = (Get-MyComputerProduct)
 $Model = (Get-MyComputerModel)
 $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 
-#=================================================
-#   oobeCloud Settings
-#=================================================
-$Global:oobeCloud = @{
-    oobeUpdateDrivers = $true
-    oobeUpdateWindows = $true
-}
-
-Write-Output $Global:MyOSDCloud
+#Set OSDCloud Vars
+$Global:MyOSDCloud = [ordered]@{
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$false
+    WindowsDefenderUpdate = [bool]$false
+    ClearDiskConfirm = [bool]$False
+    }
 
 #=======================================================================
 #   Start OSDCloud met parameters
