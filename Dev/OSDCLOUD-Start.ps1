@@ -6,13 +6,15 @@
 if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force
+    Install-module -Name HPCMSL -force
 } else {
     Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
 try {
     Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
-    Import-Module -Name OSD -Force 
+    Import-Module -Name OSD -Force
+    Import-Module -Name HPCMSL -force
     Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
 }
 catch {
@@ -29,7 +31,7 @@ $Params = @{
     OSBuild = "24H2"
     OSEdition = "Enterprise"
     OSLanguage = "nl-nl"
-    OSLicense = "Volune"
+    OSLicense = "Volume"
     ZTI = $true
     Firmware = $false
 }
