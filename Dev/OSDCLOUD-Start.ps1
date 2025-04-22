@@ -28,6 +28,7 @@ catch {
 
 $Global:MyOSDCloud = [ordered]@{
     Restart = [bool]$true
+    ClearDiskConfirm = [bool]$true
     RecoveryPartition = [bool]$true
     WindowsUpdate = [bool]$true
     WindowsUpdateDrivers = [bool]$false
