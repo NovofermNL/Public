@@ -24,8 +24,6 @@ $Params = @{
     OSEdition   = "Enterprise"
     OSLanguage  = "nl-nl"
     OSLicense   = "Volume"
-    SkipAutopilot = $true
-    SkipODT     = $true
 }
 Start-OSDCloud @Params
 
