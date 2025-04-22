@@ -82,6 +82,8 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1" -OutFile "$ScriptPath\Copy-Start.ps1"
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1" -OutFile "$ScriptPath\OSDCleanUp.ps1"
 Copy-Item "X:\OSDCloud\Config\Manage-HP-Biossettings.ps1" -Destination "$ScriptPath\Manage-HP-BIOS-Settings.ps1" -Force
+Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
+Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
 #================================================
 #   PostOS - Set OOBEDeploy CMD
