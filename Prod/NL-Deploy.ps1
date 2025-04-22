@@ -53,12 +53,15 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/O
 Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
 Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
 Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
+Copy-Item "X:\OSDCloud\Config\Install-WindowsUpdate.ps1" -Destination "C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1" -Encoding ascii -Force
 
 $OOBECMD = @'
 @echo off
 :: OOBE fase – verwijder standaard apps
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 :: OOBE fase – Aanpassen Start Menu
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+:: OOBE fase – Installeren Windows Updates
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 '@
 
