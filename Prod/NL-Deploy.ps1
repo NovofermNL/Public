@@ -72,18 +72,21 @@ start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\W
 :: Laatste updates installeren
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
 
+:: Laatste opruimtaken vóór eerste login
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
+'@
+
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
- 
- #================================================
- #   PostOS - SetupComplete
- #================================================
- $CleanUp = @'
- @echo off
- PowerShell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
- exit /b 0
- '@
- $SetupComplete | Out-File -FilePath "C:\Windows\Setup\scripts\CleanUp.cmd" -Encoding ascii -Force
- 
+
+#================================================
+#   PostOS - SetupComplete
+#================================================
+$CleanUp = @'
+@echo off
+PowerShell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
+exit /b 0
+'@
+$SetupComplete | Out-File -FilePath "C:\Windows\Setup\scripts\CleanUp.cmd" -Encoding ascii -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
