@@ -18,7 +18,6 @@ $Global:MyOSDCloud = [ordered]@{
     WindowsUpdateDrivers = [bool]$false
     WindowsDefenderUpdate = [bool]$true
     SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$false
     ShutdownSetupComplete = [bool]$false
     SyncMSUpCatDriverUSB = [bool]$false
     CheckSHA1 = [bool]$true
