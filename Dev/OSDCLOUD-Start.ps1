@@ -1,16 +1,25 @@
 #================================================
 #   [PreOS] Update Module
 #================================================
-if ((Get-MyComputerModel) -match 'Virtual') {
-    Write-Host  -ForegroundColor Green "Setting Display Resolution to 1600x"
-    Set-DisRes 1600
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+if ($env:SystemDrive -ne "X:") {
+    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
+    Install-Module -Name OSD -Force
+} else {
+    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
-Write-Host -ForegroundColor Green "Updating OSD PowerShell Module"
-Install-Module OSD -Force
+try {
+    Write-Host -ForegroundColor Green "Importeren van OSD PowerShell Module..."
+    Import-Module -Name OSD -Force 
+    Write-Host -ForegroundColor Green "OSD-module succesvol geïmporteerd"
+}
+catch {
+    Write-Host -ForegroundColor Red "Fout bij het importeren van de OSD-module: $_"
+    exit 1
+}
 
-Write-Host  -ForegroundColor Green "Importing OSD PowerShell Module"
-Import-Module OSD -Force   
 
 #=======================================================================
 #   [OS] Params and Start-OSDCloud
@@ -18,9 +27,9 @@ Import-Module OSD -Force
 $Params = @{
     OSVersion = "Windows 11"
     OSBuild = "24H2"
-    OSEdition = "Pro"
+    OSEdition = "Enterprise"
     OSLanguage = "nl-nl"
-    OSLicense = "Retail"
+    OSLicense = "Volune"
     ZTI = $true
     Firmware = $false
 }
@@ -81,61 +90,15 @@ If (!(Test-Path "C:\ProgramData\OSDeploy")) {
 $OOBEDeployJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
 
 #================================================
-#  [PostOS] AutopilotOOBE Configuration Staging
-#================================================
-<#
-Write-Host -ForegroundColor Green "Define Computername:"
-$Serial = Get-WmiObject Win32_bios | Select-Object -ExpandProperty SerialNumber
-$TargetComputername = $Serial.Substring(4,3)
-
-$AssignedComputerName = "AkosCloud-$TargetComputername"
-Write-Host -ForegroundColor Red $AssignedComputerName
-Write-Host ""
-
-Write-Host -ForegroundColor Green "Create C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json"
-$AutopilotOOBEJson = @"
-{
-    "AssignedComputerName" : "$AssignedComputerName",
-    "AddToGroup":  "AADGroupX",
-    "Assign":  {
-                   "IsPresent":  false
-               },
-    "GroupTag":  "GroupTagXXX",
-    "Hidden":  [
-                   "AddToGroup",
-                   "AssignedUser",
-                   "PostAction",
-                   "GroupTag",
-                   "Assign"
-               ],
-    "PostAction":  "Quit",
-    "Run":  "NetworkingWireless",
-    "Docs":  "https://google.com/",
-    "Title":  "Autopilot Manual Register"
-}
-"@
-
-If (!(Test-Path "C:\ProgramData\OSDeploy")) {
-    New-Item "C:\ProgramData\OSDeploy" -ItemType Directory -Force | Out-Null
-}
-$AutopilotOOBEJson | Out-File -FilePath "C:\ProgramData\OSDeploy\OSDeploy.AutopilotOOBE.json" -Encoding ascii -Force
-#>
-#================================================
 #  [PostOS] AutopilotOOBE CMD Command Line
 #================================================
-Write-Host -ForegroundColor Green "Create C:\Windows\System32\Scripts\OOBE.cmd"
+Write-Host -ForegroundColor Green "Create C:\Windows\Setup\scripts\oobe.cmd"
 $OOBECMD = @'
 PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
-Set Path = %PATH%;C:\Program Files\WindowsPowerShell\Scripts
-Start /Wait PowerShell -NoL -C Install-Module AutopilotOOBE -Force -Verbose
-Start /Wait PowerShell -NoL -C Install-Module OSD -Force -Verbose
 Start /Wait PowerShell -NoL -C Start-OOBEDeploy
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Set-KeyboardLang.ps1
-
-Start /Wait PowerShell -NoL -C Invoke-WebPSScript https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleunUp.ps1
 Start /Wait PowerShell -NoL -C Restart-Computer -Force
 '@
-$OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Force
+$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
 #================================================
 #  [PostOS] SetupComplete CMD Command Line
