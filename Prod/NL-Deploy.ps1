@@ -64,10 +64,10 @@ $OOBECMD = @'
 @echo off
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-Start /Wait PowerShell -NoLogo -Command PowerShell Set-ExecutionPolicy ByPass -Force
-Start /Wait PowerShell -NoLogo -Command Install-Module PSWindowsUpdate -Force -Verbose
-Start /Wait PowerShell -NoLogo -Command Import-Module PSWindowsUpdate -Force -Verbose
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
+::Start /Wait PowerShell -NoLogo -Command PowerShell Set-ExecutionPolicy ByPass -Force
+::Start /Wait PowerShell -NoLogo -Command Install-Module PSWindowsUpdate -Force -Verbose
+::Start /Wait PowerShell -NoLogo -Command Import-Module PSWindowsUpdate -Force -Verbose
+::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
