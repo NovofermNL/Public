@@ -62,14 +62,11 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 # Bouw OOBE.cmd inhoud
 $OOBECMD = @'
 @echo off
-
-:: OOBE fase – verwijder standaard apps
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-
-:: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-
-:: Laatste updates installeren
+Start /Wait PowerShell -NoLogo -Command PowerShell Set-ExecutionPolicy ByPass -Force
+Start /Wait PowerShell -NoLogo -Command Install-Module PSWindowsUpdate -Force -Verbose
+Start /Wait PowerShell -NoLogo -Command Import-Module PSWindowsUpdate -Force -Verbose
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
 '@
 
