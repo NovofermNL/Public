@@ -34,17 +34,21 @@ $OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
-    Restart = [bool]$False
-    RecoveryPartition = [bool]$true
-    OEMActivation = [bool]$True
-    WindowsUpdate = [bool]$true
-    WindowsUpdateDrivers = [bool]$true
-    WindowsDefenderUpdate = [bool]$true
-    SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$False
+    Restart               = [bool]$false
+    RecoveryPartition     = [bool]$true
+    OEMActivation         = [bool]$true 
+    WindowsUpdate         = [bool]$true 
+    MSCatalogFirmware     = [bool]$true 
+    WindowsUpdateDrivers  = [bool]$true
+    WindowsDefenderUpdate = [bool]$true 
+    SetTimeZone           = [bool]$true
+    SkipClearDisk         = [bool]$false
+    ClearDiskConfirm      = [bool]$false
     ShutdownSetupComplete = [bool]$false
-    SyncMSUpCatDriverUSB = [bool]$true
-    CheckSHA1 = [bool]$true
+    SyncMSUpCatDriverUSB  = [bool]$true
+    CheckSHA1             = [bool]$true
+    HPBIOSUpdate          = [bool]$true
+    HPCMSLDriverPackLatest= [bool]$true
 }
 
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
