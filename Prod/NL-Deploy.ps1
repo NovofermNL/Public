@@ -86,7 +86,7 @@ $CleanUp = @'
 PowerShell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
 exit /b 0
 '@
-$SetupComplete | Out-File -FilePath "C:\Windows\Setup\scripts\CleanUp.cmd" -Encoding ascii -Force
+$CleanUp | Out-File -FilePath "C:\Windows\Setup\scripts\CleanUp.cmd" -Encoding ascii -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
