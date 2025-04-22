@@ -65,24 +65,12 @@ start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setu
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 
+:: Laatste opruimtaken vóór eerste login
+powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1
+
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
-
-# SetupComplete – wordt uitgevoerd vóór eerste login
-$SetupComplete = @'
-@echo off
-
-:: Installeren van Windows Updates
-powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1" >> "C:\Windows\Setup\scripts\Install-WindowsUpdate.log" 2>&1
-
-:: Laatste opruimtaken vóór eerste login
-powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1" >> "C:\Windows\Setup\scripts\OSDCleanUp.log" 2>&1
-
-exit /b 0
-'@
-
-$SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
 
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
