@@ -27,10 +27,10 @@ catch {
 #  Profile OSD OSDDeploy
 #  ---------------------------------------------------------------------------
 
-$OSName = 'Windows 11 23H2 x64'
-$OSEdition = 'Pro'
-$OSActivation = 'Retail'
-$OSLanguage = 'en-us'
+$OSName = 'Windows 11 24H2 x64'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
+$OSLanguage = 'nl-nl'
 
 #Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
