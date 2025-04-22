@@ -8,7 +8,8 @@
 if ($env:SystemDrive -ne "X:") {
     Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
     Install-Module -Name OSD -Force
-} else {
+}
+else {
     Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
 }
 
@@ -23,12 +24,12 @@ catch {
 }
 
 #Set OSDCloud Vars
- $Global:MyOSDCloud = [ordered]@{
-     ClearDiskConfirm = [bool]$False
-     }
+$Global:MyOSDCloud = [ordered]@{
+    ClearDiskConfirm = [bool]$False
+}
  
- #write variables to console
- $Global:MyOSDCloud
+#write variables to console
+$Global:MyOSDCloud
 
 #Variables bepalen welke windows versie wordt geinstalleerd. 
 $OSVersion = 'Windows 11'
