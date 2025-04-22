@@ -27,44 +27,28 @@ catch {
 #  Profile OSD OSDDeploy
 #  ---------------------------------------------------------------------------
 
-if ($CustomProfile -in 'OSD','OSDDeploy') {
-    $AddNetFX3      = $true
-    $AddRSAT        = $False
-    $Autopilot      = $false
-    $UpdateDrivers  = $false
-    $UpdateWindows  = $false
-    $RemoveAppx     = @(
-        'Microsoft.549981C3F5F10',
-        'Microsoft.BingWeather',
-        'Microsoft.GetHelp',
-        'Microsoft.Getstarted',
-        'Microsoft.Microsoft3DViewer',
-        'Microsoft.MicrosoftOfficeHub',
-        'Microsoft.MicrosoftSolitaireCollection',
-        'Microsoft.MixedReality.Portal',
-        'Microsoft.Office.OneNote',
-        'Microsoft.People',
-        'Microsoft.SkypeApp',
-        'Microsoft.Wallet',
-        'Microsoft.WindowsCamera',
-        'microsoft.windowscommunicationsapps',
-        'Microsoft.WindowsFeedbackHub',
-        'Microsoft.WindowsMaps',
-        'Microsoft.Xbox.TCUI',
-        'Microsoft.XboxApp',
-        'Microsoft.XboxGameOverlay',
-        'Microsoft.XboxGamingOverlay',
-        'Microsoft.XboxIdentityProvider',
-        'Microsoft.XboxSpeechToTextOverlay',
-        'Microsoft.YourPhone',
-        'Microsoft.ZuneMusic',
-        'Microsoft.ZuneVideo'
-    )
-    $SetEdition     = 'Enterprise'
+$OSName = 'Windows 11 23H2 x64'
+$OSEdition = 'Pro'
+$OSActivation = 'Retail'
+$OSLanguage = 'en-us'
+
+#Set OSDCloud Vars
+$Global:MyOSDCloud = [ordered]@{
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    OEMActivation = [bool]$True
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$true
+    WindowsDefenderUpdate = [bool]$true
+    SetTimeZone = [bool]$true
+    ClearDiskConfirm = [bool]$False
+    ShutdownSetupComplete = [bool]$false
+    SyncMSUpCatDriverUSB = [bool]$true
+    CheckSHA1 = [bool]$true
 }
-# Start installatie van Windows 11 via OSDCloud
-Write-Host -ForegroundColor Cyan "Start installatie van Windows 11..."
-Start-OSDCloud -OSName 'Windows 11 24H2 x64' -OSLanguage nl-nl -OSEdition Enterprise -OSActivation Volume
+
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
 
 # Maak OOBE.cmd voor automatische taken tijdens OOBE-fase
 Write-Host -ForegroundColor Green "Maak C:\Windows\System32\OOBE.cmd aan"
