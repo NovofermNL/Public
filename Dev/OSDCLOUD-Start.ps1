@@ -22,6 +22,25 @@ catch {
     exit 1
 }
 
+#=======================================================================
+#   OSDCloud Global Setrtings
+#=======================================================================
+
+$Global:MyOSDCloud = [ordered]@{
+    Restart = [bool]$true
+    RecoveryPartition = [bool]$true
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$false
+    WindowsDefenderUpdate = [bool]$true
+    SetTimeZone = [bool]$true
+    ClearDiskConfirm = [bool]$false
+    ShutdownSetupComplete = [bool]$false
+    SyncMSUpCatDriverUSB = [bool]$false
+    CheckSHA1 = [bool]$true
+    HPIADrivers = [bool]$true
+}
+
+
 
 #=======================================================================
 #   [OS] Params and Start-OSDCloud
