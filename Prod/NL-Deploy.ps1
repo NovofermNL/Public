@@ -57,12 +57,16 @@ Copy-Item "X:\OSDCloud\Config\Install-WindowsUpdate.ps1" -Destination "C:\Window
 
 $OOBECMD = @'
 @echo off
+
 :: OOBE fase – verwijder standaard apps
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
+
 :: OOBE fase – Aanpassen Start Menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+
 :: OOBE fase – Installeren Windows Updates
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
+
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
@@ -70,10 +74,13 @@ $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding asci
 # SetupComplete – wordt uitgevoerd vóór eerste login
 $SetupComplete = @'
 @echo off
+
 :: Installeren van Windows Updates
-powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1"
+powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1" >> "C:\Windows\Setup\scripts\Install-WindowsUpdate.log" 2>&1
+
 :: Laatste opruimtaken vóór eerste login
-powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
+powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1" >> "C:\Windows\Setup\scripts\OSDCleanUp.log" 2>&1
+
 exit /b 0
 '@
 
