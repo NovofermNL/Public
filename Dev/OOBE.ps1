@@ -29,6 +29,7 @@ $Params = @{
 }
 Start-OSDCloud @Params
 
+<#
 #================================================
 #   PostOS - OOBEDeploy Configuration
 #================================================
@@ -71,7 +72,7 @@ if (!(Test-Path $OOBEPath)) {
     New-Item -Path $OOBEPath -ItemType Directory -Force | Out-Null
 }
 $OOBEDeployJson | Out-File -FilePath "$OOBEPath\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
-
+#>
 #================================================
 #   PostOS - Download Scripts
 #================================================
@@ -107,7 +108,7 @@ start "Start-OOBEDeploy" PowerShell -NoL -C Start-OOBEDeploy
 
 exit
 '@
-$OOBECMD | Out-File -FilePath "C:\Windows\OOBEDeploy.cmd" -Encoding ascii -Force
+$OOBECMD | Out-File -FilePath "C:\Windows\Setup\scripts\oobe.cmd" -Encoding ascii -Force
 
 #================================================
 #   PostOS - SetupComplete
