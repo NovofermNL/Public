@@ -179,17 +179,35 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 
 $OOBECMD = @'
 @echo off
+REM =============================================
+REM Wacht tot gebruiker 'defaultuser0' actief is
+REM =============================================
+
+:waitloop
+for /f "tokens=2 delims=\" %%i in ('whoami') do set currentuser=%%i
+echo Controleer gebruiker: %currentuser%
+echo %currentuser% | findstr /i "defaultuser0" >nul
+if errorlevel 1 (
+    timeout /t 3 >nul
+    goto waitloop
+)
+
+REM =============================================
 REM Set High Performance power plan
+REM =============================================
 powercfg.exe /S SCHEME_MIN
-REM Wait for Network 10 seconds
-ping 127.0.0.1 -n 60 >NUL 2>&1
-REM Execute OOBE Tasks
+
+REM =============================================
+REM OOBE Tasks starten
+REM =============================================
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 ::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-start /wait powershell.exe -NoLogo -Command "iex (irm https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OOBE.ps1)"
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
+
+exit /b 0
 '@
-$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
+$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\oobe.cmd' -Encoding ascii -Force
 
     #================================================
     #  [PostOS] SetupComplete CMD
