@@ -87,16 +87,13 @@ $OSLanguage = 'nl-nl'
 
 $Global:MyOSDCloud = [ordered]@{
     Restart               = [bool]$False
-    RecoveryPartition     = [bool]$true
-    OEMActivation         = [bool]$True
-    WindowsUpdate         = [bool]$true
+    WindowsUpdate         = [bool]$false
     WindowsUpdateDrivers  = [bool]$true
-    WindowsDefenderUpdate = [bool]$true
-    SetTimeZone           = [bool]$true
+    WindowsDefenderUpdate = [bool]$false
+    SetTimeZone           = [bool]$false
     ClearDiskConfirm      = [bool]$False
     ShutdownSetupComplete = [bool]$false
     SyncMSUpCatDriverUSB  = [bool]$true
-    CheckSHA1             = [bool]$true
 }
 
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
