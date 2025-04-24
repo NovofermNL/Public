@@ -173,17 +173,8 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/
 Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
 Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
-    #================================================
-    #  [PostOS] OOBE CMD
-    #================================================
-
 $OOBECMD = @'
 @echo off
-
-REM =============================================
-REM Wacht 1 minuut zodat OOBE/Netwerk etc. kunnen starten
-REM =============================================
-timeout /t 60 /nobreak >nul
 
 REM =============================================
 REM Zet High Performance power plan
@@ -202,14 +193,12 @@ exit /b 0
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\oobe.cmd' -Encoding ascii -Force
 
-    #================================================
-    #  [PostOS] SetupComplete CMD
-    #================================================
-    
-    Write-Host -ForegroundColor Cyan "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
-    $SetupCompleteCMD = @'
+$SetupCompleteCMD = @'
+@echo off
+REM Start OOBE.cmd handmatig omdat deze niet vanzelf start in deze context
+C:\Windows\Setup\Scripts\oobe.cmd
+exit /b 0
 '@
-    $SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Width 2000 -Force
 
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
