@@ -1,129 +1,149 @@
-#================================================
-#   OSDCloud Task Sequence - Novoferm W11 24H2 NL
-#================================================
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+[CmdletBinding()]
+param()
 
-#================================================
-#   PreOS - Install and Import OSD Module
-#================================================
-if ($env:SystemDrive -ne "X:") {
-    Write-Host -ForegroundColor Green "Buiten WinPE gedetecteerd – OSD-module wordt geïnstalleerd"
-    Install-Module -Name OSD -Force
+#region Initialize
+$Transcript = "$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-OSDCloud.log"
+$null = Start-Transcript -Path (Join-Path "$env:SystemRoot\Temp" $Transcript) -ErrorAction Ignore
+
+#=================================================
+#   oobeCloud Settings
+#=================================================
+$Global:oobeCloud = @{
+    oobeAddCapability     = $true
+    oobeAddCapabilityName = 'NetFX'
+    oobeUpdateDrivers     = $true
+    oobeUpdateWindows     = $true
+    oobeRestartComputer   = $true
+    oobeStopComputer      = $false
 }
-else {
-    Write-Host -ForegroundColor Yellow "WinPE gedetecteerd – Install-Module wordt overgeslagen"
+
+function Step-oobeExecutionPolicy {
+    if ($env:UserName -eq 'defaultuser0') {
+        if ((Get-ExecutionPolicy) -ne 'RemoteSigned') {
+            Write-Host -ForegroundColor Cyan 'Set-ExecutionPolicy RemoteSigned'
+            Set-ExecutionPolicy RemoteSigned -Force
+        }
+    }
 }
 
-Import-Module OSD -Force
-
-#================================================
-#   [OS] Start-OSDCloud with Params
-#================================================
-$Params = @{
-    OSBuild     = "24H2"
-    OSEdition   = "Enterprise"
-    OSLanguage  = "nl-nl"
-    OSLicense   = "Volume"
+function Step-oobePackageManagement {
+    if ($env:UserName -eq 'defaultuser0') {
+        if (-not (Get-Module -Name PowerShellGet -ListAvailable | Where-Object {$_.Version -ge '2.2.5'})) {
+            Write-Host -ForegroundColor Cyan 'Install-Package PowerShellGet'
+            Install-Package -Name PowerShellGet -MinimumVersion 2.2.5 -Force -Confirm:$false -Source PSGallery | Out-Null
+            Import-Module PackageManagement,PowerShellGet -Force
+        }
+        else {
+            Write-Host -ForegroundColor Cyan 'PowerShellGet 2.2.5 or greater is already installed'
+        }
+    }
 }
-Start-OSDCloud @Params
 
-<#
-#================================================
-#   PostOS - OOBEDeploy Configuration
-#================================================
-$OOBEDeployJson = @'
-{
-    "AddNetFX3":  { "IsPresent": true },
-    "Autopilot":  { "IsPresent": false },
-    "RemoveAppx":  [
-        "Clipchamp.Clipchamp",
-        "Microsoft.BingNews",
-        "Microsoft.BingSearch",
-        "Microsoft.BingWeather",
-        "Microsoft.GamingApp",
-        "Microsoft.GetHelp",
-        "Microsoft.MicrosoftOfficeHub",
-        "Microsoft.MicrosoftSolitaireCollection",
-        "Microsoft.MicrosoftStickyNotes",
-        "Microsoft.OutlookForWindows",
-        "Microsoft.PowerAutomateDesktop",
-        "Microsoft.Todos",
-        "Microsoft.Windows.DevHome",
-        "Microsoft.WindowsAlarms",
-        "Microsoft.WindowsFeedbackHub",
-        "Microsoft.WindowsSoundRecorder",
-        "Microsoft.WindowsTerminal",
-        "Microsoft.Xbox.TCUI",
-        "Microsoft.XboxGamingOverlay",
-        "Microsoft.XboxIdentityProvider",
-        "Microsoft.XboxSpeechToTextOverlay",
-        "Microsoft.YourPhone",
-        "Microsoft.ZuneMusic"
-    ],
-    "UpdateDrivers": { "IsPresent": true },
-    "UpdateWindows": { "IsPresent": true }
+function Step-oobeTrustPSGallery {
+    if ($env:UserName -eq 'defaultuser0') {
+        $PSRepository = Get-PSRepository -Name PSGallery
+        if ($PSRepository -and $PSRepository.InstallationPolicy -ne 'Trusted') {
+            Write-Host -ForegroundColor Cyan 'Set-PSRepository PSGallery Trusted'
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        }
+    }
 }
-'@
 
-$OOBEPath = "C:\ProgramData\OSDeploy"
-if (!(Test-Path $OOBEPath)) {
-    New-Item -Path $OOBEPath -ItemType Directory -Force | Out-Null
+function Step-oobeAddCapability {
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeAddCapability -eq $true)) {
+        Write-Host -ForegroundColor Cyan "Add-WindowsCapability"
+        foreach ($Item in $Global:oobeCloud.oobeAddCapabilityName) {
+            $WindowsCapability = Get-WindowsCapability -Online -Name "*$Item*" -ErrorAction SilentlyContinue | Where-Object {$_.State -ne 'Installed'}
+            foreach ($Capability in $WindowsCapability) {
+                Write-Host -ForegroundColor DarkGray $Capability.DisplayName
+                $Capability | Add-WindowsCapability -Online | Out-Null
+            }
+        }
+    }
 }
-$OOBEDeployJson | Out-File -FilePath "$OOBEPath\OSDeploy.OOBEDeploy.json" -Encoding ascii -Force
-#>
-#================================================
-#   PostOS - Download Scripts
-#================================================
-$ScriptPath = "C:\Windows\Setup\scripts"
-if (!(Test-Path $ScriptPath)) { New-Item -ItemType Directory -Path $ScriptPath -Force | Out-Null }
 
-Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "$ScriptPath\start2.bin"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Update-HPDrivers.ps1" -OutFile "$ScriptPath\Update-HPDrivers.ps1"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1" -OutFile "$ScriptPath\Copy-Start.ps1"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1" -OutFile "$ScriptPath\OSDCleanUp.ps1"
-Copy-Item "X:\OSDCloud\Config\Manage-HP-Biossettings.ps1" -Destination "$ScriptPath\Manage-HP-BIOS-Settings.ps1" -Force
-Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
-Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
+function Step-oobeEnsurePSWindowsUpdate {
+    $ModuleName = "PSWindowsUpdate"
+    $RequiredVersion = [version]'2.2.0.3'
 
-#================================================
-#   PostOS - Set OOBEDeploy CMD
-#================================================
-$OOBECMD = @'
-@echo off
+    $installedModule = Get-Module -Name $ModuleName -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1
 
-:: Set the PowerShell Execution Policy
-PowerShell -NoL -Com Set-ExecutionPolicy RemoteSigned -Force
+    if ($installedModule) {
+        if ($installedModule.Version -lt $RequiredVersion) {
+            Write-Host -ForegroundColor Cyan "$ModuleName versie $($installedModule.Version) is oud, uitvoeren van update..."
+            Update-Module -Name $ModuleName -Force -ErrorAction SilentlyContinue
+        }
+        else {
+            Write-Host -ForegroundColor Cyan "$ModuleName versie $($installedModule.Version) is up-to-date"
+        }
+        Import-Module $ModuleName -Force -ErrorAction SilentlyContinue
+    }
+    else {
+        Write-Host -ForegroundColor Cyan "$ModuleName is niet geïnstalleerd, installatie wordt gestart..."
+        Install-Module -Name $ModuleName -Force -ErrorAction SilentlyContinue
+        Import-Module $ModuleName -Force -ErrorAction SilentlyContinue
+    }
+}
 
-:: Set BIOS Settings if HP Device
-PowerShell -NoL -Command "if ((Get-CimInstance -Class Win32_ComputerSystem).Manufacturer -like '*HP*') { & 'C:\Windows\Setup\scripts\Manage-HP-BIOS-Settings.ps1' -SetSettings }"
+function Step-oobeUpdateDrivers {
+    $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 
-:: Copy Custom Start Menu
-start /Wait PowerShell -NoL -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1"
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeUpdateDrivers -eq $true)) {
+        if ($Manufacturer -match "HP") {
+            Write-Host -ForegroundColor Yellow "HP-systeem gedetecteerd – PSWindowsUpdate wordt niet gebruikt voor drivers (afgevangen in Deploy.ps1 via HPCMSL)"
+            return
+        }
 
-:: Update HP Drivers if HP Device
-PowerShell -NoL -Command "if ((Get-CimInstance -Class Win32_ComputerSystem).Manufacturer -like '*HP*') { & 'C:\Windows\Setup\scripts\Update-HPDrivers.ps1' }"
+        Write-Host -ForegroundColor Cyan 'Drivers worden bijgewerkt via PSWindowsUpdate'
 
-:: Start OOBEDeploy
-start "Start-OOBEDeploy" PowerShell -NoL -C Start-OOBEDeploy
+        Step-oobeEnsurePSWindowsUpdate
 
-exit
-'@
-$OOBECMD | Out-File -FilePath "C:\Windows\Setup\scripts\oobe.cmd" -Encoding ascii -Force
+        if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+            Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -UpdateType Driver -AcceptAll -IgnoreReboot" -Wait
+        }
+    }
+}
 
-#================================================
-#   PostOS - SetupComplete
-#================================================
-$SetupComplete = @'
-@echo off
-::Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview'" -Wait
-PowerShell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\OSDCleanUp.ps1"
-exit /b 0
-'@
-$SetupComplete | Out-File -FilePath "C:\Windows\Setup\scripts\SetupComplete.cmd" -Encoding ascii -Force
+function Step-oobeUpdateWindows {
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeUpdateWindows -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Updating Windows'
 
-#================================================
-#   PostOS - Restart Computer
-#================================================
-Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
-Start-Sleep -Seconds 20
-wpeutil reboot
+        Step-oobeEnsurePSWindowsUpdate
+
+        if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+            Add-WUServiceManager -MicrosoftUpdate -Confirm:$false | Out-Null
+            Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview' -NotKBArticleID 'KB890830','KB5005463','KB4481252'" -Wait
+        }
+    }
+}
+
+function Step-oobeRestartComputer {
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeRestartComputer -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Build Complete!'
+        Write-Warning 'Device will restart in 30 seconds.  Press Ctrl + C to cancel'
+        Stop-Transcript
+        Start-Sleep -Seconds 30
+        Restart-Computer
+    }
+}
+
+function Step-oobeStopComputer {
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeStopComputer -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Build Complete!'
+        Write-Warning 'Device will shutdown in 30 seconds. Press Ctrl + C to cancel'
+        Stop-Transcript
+        Start-Sleep -Seconds 30
+        Stop-Computer
+    }
+}
+#endregion
+
+# Execute functions
+Step-oobeExecutionPolicy
+Step-oobePackageManagement
+Step-oobeTrustPSGallery
+Step-oobeAddCapability
+Step-oobeUpdateDrivers
+Step-oobeUpdateWindows
+Step-oobeRestartComputer
+Step-oobeStopComputer
