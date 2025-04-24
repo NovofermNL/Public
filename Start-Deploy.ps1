@@ -179,8 +179,10 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 
 $OOBECMD = @'
 @echo off
+REM Set High Performance power plan
+powercfg.exe /S SCHEME_MIN
 REM Wait for Network 10 seconds
-REM ping 127.0.0.1 -n 10 -w 1  >NUL 2>&1
+ping 127.0.0.1 -n 10 >NUL 2>&1
 REM Execute OOBE Tasks
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 ::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
