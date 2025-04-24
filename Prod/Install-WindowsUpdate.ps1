@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Installeert alle beschikbare Windows-updates via PSWindowsUpdate.
+Installeert Windows-updates via PSWindowsUpdate, met uitsluiting van specifieke updates.
 
 .BY
 Novoferm Nederland BV
@@ -14,7 +14,7 @@ Novoferm Nederland BV
 # Basisinstellingen
 # =========================================
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Start-Transcript -Path "C:\Windows\Temp\Install-WindowsUpdate.log"
+Start-Transcript -Path "C:\Windows\Temp\Install-WindowsUpdate\Install-WindowsUpdate.log"
 
 # =========================================
 # Zorg dat NuGet en PowerShellGet werken
@@ -71,13 +71,16 @@ function Ensure-PSWindowsUpdate {
 }
 
 # =========================================
-# Functie: Installeer updates
+# Functie: Installeer updates met filters
 # =========================================
 
 function Install-WindowsUpdates {
     try {
-        Write-Host "Zoeken naar updates..."
-        Get-WindowsUpdate -AcceptAll -Install -AutoReboot -Verbose
+        Write-Host "Zoeken naar geschikte updates (geen previews of uitgesloten KB's)..."
+        Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot `
+            -NotTitle 'Preview' `
+            -NotKBArticleID 'KB890830','KB5005463','KB4481252' `
+            -Verbose -Wait
     } catch {
         Write-Warning "Fout bij installeren van updates: $_"
     }
