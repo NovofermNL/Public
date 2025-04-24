@@ -1,6 +1,3 @@
-# Forceer gebruik van TLS 1.2
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
 #region Initialisatie: Functies voor console-output (logging met opmaak)
 function Write-DarkGrayDate {
     [CmdletBinding()]
@@ -87,8 +84,8 @@ $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
 $OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Enterprise'
-$OSActivation = 'Volume'
+$OSEdition = 'Pro'
+$OSActivation = 'Retail'
 $OSLanguage = 'nl-nl'
 
 # OSDCloud instellingen definiëren
@@ -178,43 +175,10 @@ Write-Host "Start OSDCloud met: Naam = $OSName, Editie = $OSEdition, Activatie =
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
-Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
-
-# Download scripts (met ErrorAction)
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OOBE.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OOBE.ps1' -Encoding ascii -Force
-Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" -ErrorAction Stop
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
-#Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Install-WindowsUpdate.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1' -Encoding ascii -Force
-
-# Zet hash upload scripts klaar
-Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
-Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
-
-<#
-# Bouw OOBE.cmd inhoud
-$OOBECMD = @'
-@echo off
-
-REM Wait for Network 10 seconds
-REM ping 127.0.0.1 -n 10 -w 1  >NUL 2>&1
-
-REM Execute OOBE Tasks
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
-exit /b 0
-'@
-
-$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
-#>
 # Na OSDCloud: aangepaste acties uitvoeren voor herstart
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 
 # Systeem afsluiten na installatie
 Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Systeem afsluiten om $(Get-Date)"
-wpeutil reboot -force
-
+Restart-Computer -Force
