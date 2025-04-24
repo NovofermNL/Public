@@ -84,8 +84,8 @@ $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
 $OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Pro'
-$OSActivation = 'Retail'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
 $OSLanguage = 'nl-nl'
 
 # OSDCloud instellingen definiëren
