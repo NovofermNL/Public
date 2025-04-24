@@ -182,13 +182,12 @@ $OOBECMD = @'
 REM Set High Performance power plan
 powercfg.exe /S SCHEME_MIN
 REM Wait for Network 10 seconds
-ping 127.0.0.1 -n 10 >NUL 2>&1
+ping 127.0.0.1 -n 60 >NUL 2>&1
 REM Execute OOBE Tasks
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 ::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 start /wait powershell.exe -NoLogo -Command "iex (irm https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OOBE.ps1)"
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
-exit /b 0
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
