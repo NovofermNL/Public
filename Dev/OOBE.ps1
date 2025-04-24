@@ -11,6 +11,8 @@ $null = Start-Transcript -Path (Join-Path "$env:SystemRoot\Temp" $Transcript) -E
 $Global:oobeCloud = @{
     oobeAddCapability     = $true
     oobeAddCapabilityName = 'NetFX'
+    oobeRemoveAppxPackage = $true
+    oobeRemoveAppxPackageName = 'CommunicationsApps','OfficeHub','People','Skype','Solitaire','Xbox','ZuneMusic','ZuneVideo'
     oobeUpdateDrivers     = $true
     oobeUpdateWindows     = $true
     oobeRestartComputer   = $true
@@ -116,7 +118,38 @@ function Step-oobeUpdateWindows {
         }
     }
 }
-
+function Step-oobeRemoveAppxPackage {
+    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeRemoveAppxPackage -eq $true)) {
+        Write-Host -ForegroundColor Cyan 'Removing Appx Packages'
+        foreach ($Item in $Global:oobeCloud.oobeRemoveAppxPackageName) {
+            if (Get-Command Get-AppxProvisionedPackage) {
+                Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -Match $Item} | ForEach-Object {
+                    Write-Host -ForegroundColor DarkGray $_.DisplayName
+                    if ((Get-Command Remove-AppxProvisionedPackage).Parameters.ContainsKey('AllUsers')) {
+                        Try
+                        {
+                            $null = Remove-AppxProvisionedPackage -Online -AllUsers -PackageName $_.PackageName
+                        }
+                        Catch
+                        {
+                            Write-Warning "AllUsers Appx Provisioned Package $($_.PackageName) did not remove successfully"
+                        }
+                    }
+                    else {
+                        Try
+                        {
+                            $null = Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName
+                        }
+                        Catch
+                        {
+                            Write-Warning "Appx Provisioned Package $($_.PackageName) did not remove successfully"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 function Step-oobeRestartComputer {
     if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeRestartComputer -eq $true)) {
         Write-Host -ForegroundColor Cyan 'Build Complete!'
