@@ -176,17 +176,9 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 $OOBECMD = @'
 @echo off
 
-REM =============================================
-REM Zet High Performance power plan
-REM =============================================
-powercfg.exe /S SCHEME_MIN
-
-REM =============================================
-REM OOBE Tasks starten
-REM =============================================
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
+
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
 
 exit /b 0
@@ -195,8 +187,7 @@ $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\oobe.cmd' -Encoding asci
 
 $SetupCompleteCMD = @'
 @echo off
-REM Start OOBE.cmd handmatig omdat deze niet vanzelf start in deze context
-C:\Windows\Setup\Scripts\oobe.cmd
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
 exit /b 0
 '@
 
