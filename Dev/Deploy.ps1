@@ -212,4 +212,5 @@ Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden
 # Systeem afsluiten na installatie
 Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Systeem afsluiten om $(Get-Date)"
-Restart-Computer -Force
+wpeutil reboot -force
+
