@@ -1,3 +1,5 @@
+Start-Sleep -Seconds 20
+
 #region Initialisatie: Functies voor console-output (logging met opmaak)
 function Write-DarkGrayDate {
     [CmdletBinding()]
