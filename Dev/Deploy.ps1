@@ -48,7 +48,7 @@ function Write-SectionHeader {
         $Message
     )
     Write-DarkGrayLine
-    Write-DarkGrayDate
+    Write-DarkGrayDate $Message
     Write-Host -ForegroundColor Cyan $Message
 
     $logPath = "$env:windir\Temp\OSDCloud.log"
@@ -62,7 +62,7 @@ function Write-SectionSuccess {
         [System.String]
         $Message = 'Gelukt!'
     )
-    Write-DarkGrayDate
+    Write-DarkGrayDate $Message
     Write-Host -ForegroundColor Green $Message
 
     $logPath = "$env:windir\Temp\OSDCloud.log"
@@ -116,7 +116,8 @@ if ($Manufacturer -match "HP") {
     Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1' |
         Out-File -FilePath $tempPath -Encoding utf8 -Force
     Write-Host "Script opgeslagen naar: $tempPath"
-    Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -NoLogo -File `\"$tempPath`\"" -Wait -NoNewWindow
+    $arguments = "-ExecutionPolicy Bypass -NoLogo -File `\"$tempPath`\""
+    Start-Process powershell.exe -ArgumentList $arguments -Wait -NoNewWindow
 }
 
 # HP-specifieke updates (BIOS / TPM / HPIA)
@@ -129,7 +130,6 @@ if ($Manufacturer -match "HP") {
         iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1)
         Manage-HPBiosSettings -SetSettings
 
-        # Probeer benodigde modules te installeren met foutafhandeling
         try {
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
         } catch {
@@ -137,33 +137,21 @@ if ($Manufacturer -match "HP") {
         }
 
         try {
-            Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
+            Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
         } catch {
             Write-DarkGrayHost "FOUT: Install-Module PowerShellGet mislukt: $($_.Exception.Message)"
         }
 
         try {
-            Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -ErrorAction Stop
+            Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
         } catch {
             Write-DarkGrayHost "FOUT: Install-Module HPCMSL mislukt: $($_.Exception.Message)"
         }
 
-        # Activeer updates en functies
         $Global:MyOSDCloud.HPTPMUpdate = [bool]$true
         $Global:MyOSDCloud.HPIAALL = [bool]$true
         $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
         $Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true
-    }
-}
-
-# Lenovo BIOS-configuratie
-if ($Manufacturer -match "Lenovo") {
-    iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-LenovoBiosSettings.ps1)
-    try {
-        Manage-LenovoBIOSSettings -SetSettings
-    }
-    catch {
-        # Indien een fout optreedt bij BIOS-configuratie, doe niets
     }
 }
 
@@ -180,18 +168,7 @@ Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation
 # Na OSDCloud: aangepaste acties uitvoeren voor herstart
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 
-<# CMTrace kopiëren naar lokale Windows installatie (handig voor logfiles openen)
-if (Test-path -path "x:\windows\system32\cmtrace.exe") {
-    copy-item "x:\windows\system32\cmtrace.exe" -Destination "C:\Windows\System\cmtrace.exe" -verbose
-} #>
-
-# Lenovo PowerShell modules kopiëren naar lokale schijf
-if ($Manufacturer -match "Lenovo") {
-    $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'
-    Write-Host "Kopieer LSUClient module naar $PowerShellSavePath\Modules"
-    Copy-PSModuleToFolder -Name LSUClient -Destination "$PowerShellSavePath\Modules"
-    Write-Host "Kopieer Lenovo.Client.Scripting module naar $PowerShellSavePath\Modules"
-    Copy-PSModuleToFolder -Name Lenovo.Client.Scripting -Destination "$PowerShellSavePath\Modules"
-}
-
-restart-computer  # Uit te voeren indien gewenst na de installatie
+# Systeem afsluiten na installatie
+Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
+Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Systeem afsluiten om $(Get-Date)"
+Restart-Computer -Force
