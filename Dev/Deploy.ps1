@@ -189,6 +189,7 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/
 Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
 Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
+<#
 # Bouw OOBE.cmd inhoud
 $OOBECMD = @'
 @echo off
@@ -205,7 +206,7 @@ exit /b 0
 '@
 
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
-
+#>
 # Na OSDCloud: aangepaste acties uitvoeren voor herstart
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 
