@@ -1,14 +1,3 @@
-<#
-.SYNOPSIS
-Universeel PostInstall script voor Windows Updates en Driver Updates
-.DESCRIPTION
-Dit script draait op elk Windows-device. Installeert PSWindowsUpdate (inclusief NuGet indien nodig),
-voert Windows Updates uit, voert driver updates uit (behalve op HP), en voorkomt reboot tijdens uitvoering.
-.SCRIPTNAME
-PostInstall.ps1
-.AUTHOR
-Novoferm Nederland BV
-#>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Start-Transcript -Path "C:\Windows\Temp\-$(Get-Date -Format 'yyyyMMdd-HHmmss').log" -Force
