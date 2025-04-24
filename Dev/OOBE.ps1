@@ -11,32 +11,7 @@ $null = Start-Transcript -Path (Join-Path "$env:SystemRoot\Temp" $Transcript) -E
 $Global:oobeCloud = @{
     oobeAddCapability           = $true
     oobeAddCapabilityName       = 'NetFX'
-    oobeRemoveAppxPackage       = $true
-    oobeRemoveAppxPackageName   = @(
-        "Clipchamp.Clipchamp"
-        "Microsoft.BingNews"
-        "Microsoft.BingSearch"
-        "Microsoft.BingWeather"
-        "Microsoft.GamingApp"
-        "Microsoft.GetHelp"
-        "Microsoft.MicrosoftOfficeHub"
-        "Microsoft.MicrosoftSolitaireCollection"
-        "Microsoft.MicrosoftStickyNotes"
-        "Microsoft.OutlookForWindows"
-        "Microsoft.PowerAutomateDesktop"
-        "Microsoft.Todos"
-        "Microsoft.Windows.DevHome"
-        "Microsoft.WindowsAlarms"
-        "Microsoft.WindowsFeedbackHub"
-        "Microsoft.WindowsSoundRecorder"
-        "Microsoft.WindowsTerminal"
-        "Microsoft.Xbox.TCUI"
-        "Microsoft.XboxGamingOverlay"
-        "Microsoft.XboxIdentityProvider"
-        "Microsoft.XboxSpeechToTextOverlay"
-        "Microsoft.YourPhone"
-        "Microsoft.ZuneMusic"
-    )
+    oobeRemoveAppxPackage       = $false
     oobeUpdateDrivers           = $true
     oobeUpdateWindows           = $true
     oobeRestartComputer         = $true
