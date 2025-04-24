@@ -3,7 +3,7 @@
 Start-Transcript -Path "C:\Windows\Temp\-$(Get-Date -Format 'yyyyMMdd-HHmmss').log" -Force
 
 # Zorg dat tijdelijke execution policy niet in de weg zit
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
+#Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
 
 # Controleer of NuGet beschikbaar is
 if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
