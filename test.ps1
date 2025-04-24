@@ -6,15 +6,13 @@ function Write-DarkGrayDate {
         [System.String]
         $Message
     )
-    # Schrijft huidige datum + tijd in grijs, met optioneel een boodschap erachter
     $logPath = "$env:windir\Temp\OSDCloud.log"
     $logEntry = "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - $Message"
     Add-Content -Path $logPath -Value $logEntry
 
     if ($Message) {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) $Message"
-    }
-    else {
+    } else {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) " -NoNewline
     }
 }
@@ -50,7 +48,7 @@ function Write-SectionHeader {
         $Message
     )
     Write-DarkGrayLine
-    Write-DarkGrayDate
+    Write-DarkGrayDate $Message
     Write-Host -ForegroundColor Cyan $Message
 
     $logPath = "$env:windir\Temp\OSDCloud.log"
@@ -64,7 +62,7 @@ function Write-SectionSuccess {
         [System.String]
         $Message = 'Gelukt!'
     )
-    Write-DarkGrayDate
+    Write-DarkGrayDate $Message
     Write-Host -ForegroundColor Green $Message
 
     $logPath = "$env:windir\Temp\OSDCloud.log"
@@ -73,10 +71,14 @@ function Write-SectionSuccess {
 #endregion
 
 # Scriptinformatie (versie, naam)
-$ScriptName = 'win11.garytown.com'
+$ScriptName = 'Novoferm Nederland Windows 11 Deployment'
 $ScriptVersion = '25.01.22.1'
 Write-Host -ForegroundColor Green "Scriptnaam: $ScriptName Versie: $ScriptVersion"
-Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start $ScriptName versie $ScriptVersion op $(Get-Date)"
+
+# Logbestand leegmaken bij start
+$logPath = "$env:windir\Temp\OSDCloud.log"
+Remove-Item $logPath -Force -ErrorAction SilentlyContinue
+Add-Content -Path $logPath -Value "Start $ScriptName versie $ScriptVersion op $(Get-Date)"
 
 # Informatie verzamelen over de huidige computer + OS voorkeuren definiëren
 $Product = (Get-MyComputerProduct)
@@ -114,12 +116,12 @@ if ($DriverPack) {
 if ($Manufacturer -match "HP") {
     Write-Host "HP-systeem gedetecteerd, starten met driver update via HP-script..."
 
-    # Download script, verwijder BOM en voer uit
-    $hpScript = Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1'
-    $hpScript = $hpScript -replace '^\uFEFF', ''  # BOM verwijderen indien aanwezig
-    Invoke-Expression $hpScript
+    $tempPath = "$env:TEMP\Invoke-HPDriverUpdate.ps1"
+    Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1' |
+        Out-File -FilePath $tempPath -Encoding utf8 -Force
+    Write-Host "Script opgeslagen naar: $tempPath"
+    & $tempPath
 }
-
 
 # HP-specifieke updates (BIOS / TPM / HPIA)
 $UseHPIA = $true # Zet op $false voor snellere deployment zonder HPIA
@@ -127,31 +129,38 @@ if ($Manufacturer -match "HP") {
     if ($UseHPIA -and (Test-HPIASupport)) {
         Write-SectionHeader -Message "HP-apparaat gedetecteerd – HPIA, BIOS en TPM-updates worden ingeschakeld"
 
-        # Activeer updates en functies
-        $Global:MyOSDCloud.HPTPMUpdate = [bool]$true
-        $Global:MyOSDCloud.HPIAALL = [bool]$true
-        $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
-        $Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true
-
         # BIOS-settings toepassen
         iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1)
         Manage-HPBiosSettings -SetSettings
 
-        # Vereiste modules installeren
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force 
-        Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force
-        Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck
-    }
-}
+        try {
+            if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
+                Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
+            }
+        } catch {
+            Write-DarkGrayHost "FOUT: Install-PackageProvider mislukt: $($_.Exception.Message)"
+        }
 
-# Lenovo BIOS-configuratie
-if ($Manufacturer -match "Lenovo") {
-    iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-LenovoBiosSettings.ps1)
-    try {
-        Manage-LenovoBIOSSettings -SetSettings
-    }
-    catch {
-        # Indien een fout optreedt bij BIOS-configuratie, doe niets
+        try {
+            if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
+                Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+            }
+        } catch {
+            Write-DarkGrayHost "FOUT: Install-Module PowerShellGet mislukt: $($_.Exception.Message)"
+        }
+
+        try {
+            if (-not (Get-Module -ListAvailable -Name HPCMSL)) {
+                Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+            }
+        } catch {
+            Write-DarkGrayHost "FOUT: Install-Module HPCMSL mislukt: $($_.Exception.Message)"
+        }
+
+        $Global:MyOSDCloud.HPTPMUpdate = [bool]$true
+        $Global:MyOSDCloud.HPIAALL = [bool]$true
+        $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
+        $Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true
     }
 }
 
@@ -163,23 +172,46 @@ Write-Output $Global:MyOSDCloud | Out-File "$env:windir\Temp\OSDCloud.log" -Appe
 Write-SectionHeader -Message "OSDCloud wordt gestart"
 Write-Host "Start OSDCloud met: Naam = $OSName, Editie = $OSEdition, Activatie = $OSActivation, Taal = $OSLanguage"
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
+try {
+    Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+} catch {
+    Write-DarkGrayHost "FOUT: Start-OSDCloud mislukt: $($_.Exception.Message)"
+    exit 1
+}
+
+# Scripts downloaden voor OOBE fase
+Write-Host -ForegroundColor Green "Downloaden en aanmaken van OOBE scripts"
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OOBE.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\OOBE.ps1' -Encoding ascii -Force
+Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" -ErrorAction Stop
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
+
+Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
+Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
+
+# Bouw OOBE.cmd inhoud
+$OOBECMD = @'
+@echo off
+
+REM Wait for Network 10 seconds
+REM ping 127.0.0.1 -n 10 -w 1  >NUL 2>&1
+
+REM Execute OOBE Tasks
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
+exit /b 0
+'@
+
+$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
 # Na OSDCloud: aangepaste acties uitvoeren voor herstart
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 
-<# CMTrace kopiëren naar lokale Windows installatie (handig voor logfiles openen)
-if (Test-path -path "x:\windows\system32\cmtrace.exe") {
-    copy-item "x:\windows\system32\cmtrace.exe" -Destination "C:\Windows\System\cmtrace.exe" -verbose
-} #>
-
-# Lenovo PowerShell modules kopiëren naar lokale schijf
-if ($Manufacturer -match "Lenovo") {
-    $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'
-    Write-Host "Kopieer LSUClient module naar $PowerShellSavePath\Modules"
-    Copy-PSModuleToFolder -Name LSUClient -Destination "$PowerShellSavePath\Modules"
-    Write-Host "Kopieer Lenovo.Client.Scripting module naar $PowerShellSavePath\Modules"
-    Copy-PSModuleToFolder -Name Lenovo.Client.Scripting -Destination "$PowerShellSavePath\Modules"
-}
-
-#restart-computer  # Uit te voeren indien gewenst na de installatie
+# Systeem afsluiten na installatie
+Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
+Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Systeem afsluiten om $(Get-Date)"
+wpeutil reboot
