@@ -194,4 +194,4 @@ if ($Manufacturer -match "Lenovo") {
     Copy-PSModuleToFolder -Name Lenovo.Client.Scripting -Destination "$PowerShellSavePath\Modules"
 }
 
-#restart-computer  # Uit te voeren indien gewenst na de installatie
+restart-computer  # Uit te voeren indien gewenst na de installatie
