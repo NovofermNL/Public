@@ -12,7 +12,8 @@ function Write-DarkGrayDate {
 
     if ($Message) {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) $Message"
-    } else {
+    }
+    else {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) " -NoNewline
     }
 }
@@ -71,7 +72,7 @@ function Write-SectionSuccess {
 #endregion
 
 # Scriptinformatie (versie, naam)
-$ScriptName = 'win11.garytown.com'
+$ScriptName = 'Novoferm Nederland Windows 11 Deployment'
 $ScriptVersion = '25.01.22.1'
 Write-Host -ForegroundColor Green "Scriptnaam: $ScriptName Versie: $ScriptVersion"
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start $ScriptName versie $ScriptVersion op $(Get-Date)"
@@ -114,7 +115,7 @@ if ($Manufacturer -match "HP") {
 
     $tempPath = "$env:TEMP\Invoke-HPDriverUpdate.ps1"
     Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1' |
-        Out-File -FilePath $tempPath -Encoding utf8 -Force
+    Out-File -FilePath $tempPath -Encoding utf8 -Force
     Write-Host "Script opgeslagen naar: $tempPath"
     $arguments = "-ExecutionPolicy Bypass -NoLogo -File `\"$tempPath`\""
     Start-Process powershell.exe -ArgumentList $arguments -Wait -NoNewWindow
@@ -131,20 +132,29 @@ if ($Manufacturer -match "HP") {
         Manage-HPBiosSettings -SetSettings
 
         try {
-            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
-        } catch {
+            if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
+                Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
+            }
+        }
+        catch {
             Write-DarkGrayHost "FOUT: Install-PackageProvider mislukt: $($_.Exception.Message)"
         }
 
         try {
-            Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-        } catch {
+            if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
+                Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+            }
+        }
+        catch {
             Write-DarkGrayHost "FOUT: Install-Module PowerShellGet mislukt: $($_.Exception.Message)"
         }
 
         try {
-            Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-        } catch {
+            if (-not (Get-Module -ListAvailable -Name HPCMSL)) {
+                Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+            }
+        }
+        catch {
             Write-DarkGrayHost "FOUT: Install-Module HPCMSL mislukt: $($_.Exception.Message)"
         }
 
