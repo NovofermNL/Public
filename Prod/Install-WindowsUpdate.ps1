@@ -25,7 +25,8 @@ if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
     try {
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope AllUsers
         Write-Host "NuGet provider is geïnstalleerd."
-    } catch {
+    }
+    catch {
         Write-Warning "Installatie van NuGet-provider mislukt: $_"
     }
 }
@@ -34,7 +35,8 @@ Write-Host "Controleren of PowerShell Gallery vertrouwd is..."
 try {
     Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted -ErrorAction Stop
     Write-Host "PSGallery repository ingesteld als Trusted."
-} catch {
+}
+catch {
     Write-Warning "Kon PSGallery niet instellen als Trusted: $_"
 }
 
@@ -42,7 +44,8 @@ Write-Host "Controleren of PowerShellGet geladen is..."
 try {
     Import-Module PowerShellGet -Force -ErrorAction Stop
     Write-Host "PowerShellGet is geladen."
-} catch {
+}
+catch {
     Write-Warning "PowerShellGet kon niet worden geladen: $_"
 }
 
@@ -55,17 +58,20 @@ function Ensure-PSWindowsUpdate {
         try {
             Write-Host "PSWindowsUpdate wordt geïnstalleerd..."
             Install-Module -Name PSWindowsUpdate -Force -Scope AllUsers
-        } catch {
+        }
+        catch {
             Write-Warning "Fout bij installeren van PSWindowsUpdate: $_"
         }
-    } else {
+    }
+    else {
         Write-Host "PSWindowsUpdate is al aanwezig."
     }
 
     try {
         Import-Module PSWindowsUpdate -Force -ErrorAction Stop
         Write-Host "PSWindowsUpdate is geladen."
-    } catch {
+    }
+    catch {
         Write-Warning "Fout bij laden van PSWindowsUpdate: $_"
     }
 }
@@ -79,9 +85,10 @@ function Install-WindowsUpdates {
         Write-Host "Zoeken naar geschikte updates (geen previews of uitgesloten KB's)..."
         Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot `
             -NotTitle 'Preview' `
-            -NotKBArticleID 'KB890830','KB5005463','KB4481252' `
-            -Verbose -Wait
-    } catch {
+            -NotKBArticleID 'KB890830', 'KB5005463', 'KB4481252' `
+    
+    }
+    catch {
         Write-Warning "Fout bij installeren van updates: $_"
     }
 }
