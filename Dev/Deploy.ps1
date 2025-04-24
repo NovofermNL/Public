@@ -84,8 +84,8 @@ $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
 $OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Pro'
-$OSActivation = 'Retail'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
 $OSLanguage = 'nl-nl'
 
 # OSDCloud instellingen definiëren
@@ -103,21 +103,26 @@ $Global:MyOSDCloud = [ordered]@{
     CheckSHA1             = [bool]$true
 }
 
-## Ophalen van bijpassende driverpack o.b.v. product, OS en release
+# Ophalen van bijpassende driverpack o.b.v. product, OS en release
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
 if ($DriverPack) {
     $Global:MyOSDCloud.DriverPackName = $DriverPack.Name
 }
 
-## Specifieke driver update voor HP-systemen
+# Specifieke driver update voor HP-systemen
 if ($Manufacturer -match "HP") {
     Write-Host "HP-systeem gedetecteerd, starten met driver update via HP-script..."
 
     $tempPath = "$env:TEMP\Invoke-HPDriverUpdate.ps1"
     Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1' |
-    Out-File -FilePath $tempPath -Encoding utf8 -Force
+    Out-File -FilePath $tempPath -Encoding utf8NoBOM -Force
     Write-Host "Script opgeslagen naar: $tempPath"
-    $arguments = "-ExecutionPolicy Bypass -NoLogo -File `\"$tempPath`\""
+
+    $arguments = @(
+        "-ExecutionPolicy", "Bypass",
+        "-NoLogo",
+        "-File", $tempPath
+    )
     Start-Process powershell.exe -ArgumentList $arguments -Wait -NoNewWindow
 }
 
@@ -128,7 +133,7 @@ if ($Manufacturer -match "HP") {
         Write-SectionHeader -Message "HP-apparaat gedetecteerd – HPIA, BIOS en TPM-updates worden ingeschakeld"
 
         # BIOS-settings toepassen
-        iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1)
+        Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1')
         Manage-HPBiosSettings -SetSettings
 
         try {
@@ -174,6 +179,36 @@ Write-SectionHeader -Message "OSDCloud wordt gestart"
 Write-Host "Start OSDCloud met: Naam = $OSName, Editie = $OSEdition, Activatie = $OSActivation, Taal = $OSLanguage"
 Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+
+Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+
+# Download scripts (met ErrorAction)
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding utf8NoBOM -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OOBE.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\OOBE.ps1' -Encoding utf8NoBOM -Force
+Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" -ErrorAction Stop
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding utf8NoBOM -Force
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding utf8NoBOM -Force
+
+# Zet hash upload scripts klaar
+Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
+Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
+
+# Bouw OOBE.cmd inhoud
+$OOBECMD = @'
+@echo off
+
+REM Wait for Network 10 seconds
+REM ping 127.0.0.1 -n 10 -w 1  >NUL 2>&1
+
+REM Execute OOBE Tasks
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
+start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
+exit /b 0
+'@
+
+$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding utf8NoBOM -Force
 
 # Na OSDCloud: aangepaste acties uitvoeren voor herstart
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
