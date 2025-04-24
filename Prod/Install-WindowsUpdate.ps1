@@ -1,46 +1,77 @@
 <#
-    Scriptnaam: Update-Windows.ps1
-    Beschrijving: Installeert automatisch de laatste Windows-updates incl. CUs
-    Bron: Novoferm Nederland BV
-    Datum: 22-04-2025
+.SYNOPSIS
+Universeel PostInstall script voor Windows Updates en Driver Updates
+.DESCRIPTION
+Dit script draait op elk Windows-device. Installeert PSWindowsUpdate (inclusief NuGet indien nodig),
+voert Windows Updates uit, voert driver updates uit (behalve op HP), en voorkomt reboot tijdens uitvoering.
+.SCRIPTNAME
+PostInstall.ps1
+.AUTHOR
+Novoferm Nederland BV
 #>
 
-# Forceer TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Start-Transcript -Path "C:\Windows\Temp\-$(Get-Date -Format 'yyyyMMdd-HHmmss').log" -Force
 
-# Logging
-$LogPath = "C:\Windows\Temp\"
-$LogFile = Join-Path $LogPath "WindowsUpdate.log"
+# Zorg dat tijdelijke execution policy niet in de weg zit
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force
 
-# Zorg dat logmap bestaat
-if (-not (Test-Path $LogPath)) {
-    New-Item -Path $LogPath -ItemType Directory -Force | Out-Null
+# Controleer of NuGet beschikbaar is
+if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
+    Write-Host -ForegroundColor Cyan "NuGet-provider niet gevonden, installeren wordt gestart..."
+    Install-PackageProvider -Name NuGet -Force -Scope AllUsers -ErrorAction Stop
+} else {
+    Write-Host -ForegroundColor Green "NuGet-provider is al geïnstalleerd"
 }
 
-# Begin logging
-Start-Transcript -Path $LogFile -Append
+# Zorg dat PSGallery vertrouwd is
+$psGallery = Get-PSRepository -Name "PSGallery" -ErrorAction SilentlyContinue
+if ($psGallery -and $psGallery.InstallationPolicy -ne 'Trusted') {
+    Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+}
 
-Write-Host "=== Update-Windows.ps1 gestart op $(Get-Date -Format 'dd-MM-yyyy HH:mm:ss') ==="
+# Functie om PSWindowsUpdate te installeren of bij te werken
+function Ensure-PSWindowsUpdate {
+    $ModuleName = "PSWindowsUpdate"
+    $RequiredVersion = [version]'2.2.0.3'
 
-# Zorg dat NuGet beschikbaar is
-Write-Host "Controle op NuGet-provider..."
-Install-PackageProvider -Name NuGet -Force -Scope AllUsers
+    $installedModule = Get-Module -Name $ModuleName -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1
 
-# Installeer PSWindowsUpdate
-Write-Host "Installeren van PSWindowsUpdate-module..."
-Install-Module -Name PSWindowsUpdate -Force -Scope AllUsers
+    if ($installedModule) {
+        if ($installedModule.Version -lt $RequiredVersion) {
+            Write-Host -ForegroundColor Cyan "$ModuleName versie $($installedModule.Version) is oud, update wordt uitgevoerd..."
+            Update-Module -Name $ModuleName -Force -Scope AllUsers -ErrorAction SilentlyContinue
+        } else {
+            Write-Host -ForegroundColor Cyan "$ModuleName versie $($installedModule.Version) is up-to-date"
+        }
+    } else {
+        Write-Host -ForegroundColor Cyan "$ModuleName is niet geïnstalleerd, installatie wordt gestart..."
+        Install-Module -Name $ModuleName -Force -Scope AllUsers -ErrorAction SilentlyContinue
+    }
 
-# Zet execution policy tijdelijk open
-Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+    Import-Module $ModuleName -Force -ErrorAction SilentlyContinue
+}
 
-# Updates installeren
-Write-Host "Importeren van PSWindowsUpdate-module..."
-Import-Module PSWindowsUpdate
+# Voer Windows updates uit (zonder reboot)
+Write-Host -ForegroundColor Cyan 'Windows updates worden geïnstalleerd...'
+Ensure-PSWindowsUpdate
 
-Write-Host "Starten met downloaden en installeren van updates..."
-Get-WindowsUpdate -AcceptAll -Install -AutoReboot
+if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+    Add-WUServiceManager -MicrosoftUpdate -Confirm:$false | Out-Null
+    Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview' -NotKBArticleID 'KB890830','KB5005463','KB4481252'" -Wait
+}
 
-Write-Host "=== Update-Windows.ps1 voltooid op $(Get-Date -Format 'dd-MM-yyyy HH:mm:ss') ==="
+# Voer driver updates uit (niet voor HP)
+$Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
+if ($Manufacturer -notmatch "HP") {
+    Write-Host -ForegroundColor Cyan 'Driver updates worden uitgevoerd via PSWindowsUpdate'
+    Ensure-PSWindowsUpdate
 
-# Stop logging
+    if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
+        Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -UpdateType Driver -AcceptAll -IgnoreReboot" -Wait
+    }
+} else {
+    Write-Host -ForegroundColor Yellow "HP-systeem gedetecteerd – driver updates worden overgeslagen"
+}
+
 Stop-Transcript
