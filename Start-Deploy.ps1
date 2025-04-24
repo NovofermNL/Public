@@ -179,21 +179,14 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 
 $OOBECMD = @'
 @echo off
-REM =============================================
-REM Wacht tot gebruiker 'defaultuser0' actief is
-REM =============================================
-
-:waitloop
-for /f "tokens=2 delims=\" %%i in ('whoami') do set currentuser=%%i
-echo Controleer gebruiker: %currentuser%
-echo %currentuser% | findstr /i "defaultuser0" >nul
-if errorlevel 1 (
-    timeout /t 3 >nul
-    goto waitloop
-)
 
 REM =============================================
-REM Set High Performance power plan
+REM Wacht 1 minuut zodat OOBE/Netwerk etc. kunnen starten
+REM =============================================
+timeout /t 60 /nobreak >nul
+
+REM =============================================
+REM Zet High Performance power plan
 REM =============================================
 powercfg.exe /S SCHEME_MIN
 
