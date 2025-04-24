@@ -173,6 +173,10 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/
 Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
 Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
+    #================================================
+    #  [PostOS] OOBE CMD
+    #================================================
+
 $OOBECMD = @'
 @echo off
 REM Wait for Network 10 seconds
@@ -185,6 +189,15 @@ start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\W
 exit /b 0
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
+
+    #================================================
+    #  [PostOS] SetupComplete CMD
+    #================================================
+    
+    Write-Host -ForegroundColor Cyan "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
+    $SetupCompleteCMD = @'
+'@
+    $SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Width 2000 -Force
 
 Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
 Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
