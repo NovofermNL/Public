@@ -9,14 +9,14 @@ $null = Start-Transcript -Path (Join-Path "$env:SystemRoot\Temp" $Transcript) -E
 #   oobeCloud Settings
 #=================================================
 $Global:oobeCloud = @{
-    oobeAddCapability           = $true
-    oobeAddCapabilityName       = 'NetFX'
-    oobeRemoveAppxPackage       = $false
-    oobeUpdateDrivers           = $true
-    oobeUpdateWindows           = $true
-    oobeRestartComputer         = $true
-    oobeStopComputer            = $false
+    oobeAddCapability     = $true
+    oobeAddCapabilityName = 'NetFX'
+    oobeUpdateDrivers     = $true
+    oobeUpdateWindows     = $true
+    oobeRestartComputer   = $true
+    oobeStopComputer      = $false
 }
+
 function Step-oobeExecutionPolicy {
     if ($env:UserName -eq 'defaultuser0') {
         if ((Get-ExecutionPolicy) -ne 'RemoteSigned') {
@@ -113,38 +113,6 @@ function Step-oobeUpdateWindows {
         if (Get-Module PSWindowsUpdate -ListAvailable -ErrorAction Ignore) {
             Add-WUServiceManager -MicrosoftUpdate -Confirm:$false | Out-Null
             Start-Process PowerShell.exe -ArgumentList "-Command Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview' -NotKBArticleID 'KB890830','KB5005463','KB4481252'" -Wait
-        }
-    }
-}
-function Step-oobeRemoveAppxPackage {
-    if (($env:UserName -eq 'defaultuser0') -and ($Global:oobeCloud.oobeRemoveAppxPackage -eq $true)) {
-        Write-Host -ForegroundColor Cyan 'Removing Appx Packages'
-        foreach ($Item in $Global:oobeCloud.oobeRemoveAppxPackageName) {
-            if (Get-Command Get-AppxProvisionedPackage) {
-                Get-AppxProvisionedPackage -Online | Where-Object {$_.DisplayName -Match $Item} | ForEach-Object {
-                    Write-Host -ForegroundColor DarkGray $_.DisplayName
-                    if ((Get-Command Remove-AppxProvisionedPackage).Parameters.ContainsKey('AllUsers')) {
-                        Try
-                        {
-                            $null = Remove-AppxProvisionedPackage -Online -AllUsers -PackageName $_.PackageName
-                        }
-                        Catch
-                        {
-                            Write-Warning "AllUsers Appx Provisioned Package $($_.PackageName) did not remove successfully"
-                        }
-                    }
-                    else {
-                        Try
-                        {
-                            $null = Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName
-                        }
-                        Catch
-                        {
-                            Write-Warning "Appx Provisioned Package $($_.PackageName) did not remove successfully"
-                        }
-                    }
-                }
-            }
         }
     }
 }
