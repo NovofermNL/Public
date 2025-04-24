@@ -64,9 +64,6 @@ Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Window
 $OOBECMD = @'
 @echo off
 
-REM Wait for Network 10 seconds
-REM ping 127.0.0.1 -n 10 -w 1  >NUL 2>&1
-
 REM Execute OOBE Tasks
 ::start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OOBE.ps1
 start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
