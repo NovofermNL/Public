@@ -1,10 +1,6 @@
 # Forceer gebruik van TLS 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Zorg dat setup-map bestaat
-New-Item -ItemType Directory -Path "C:\Windows\Setup\scripts" -Force | Out-Null
-
-
 #region Initialisatie: Functies voor console-output (logging met opmaak)
 function Write-DarkGrayDate {
     [CmdletBinding()]
