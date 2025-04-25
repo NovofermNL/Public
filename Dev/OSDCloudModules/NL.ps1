@@ -25,7 +25,7 @@ catch {
 #Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
     Restart = [bool]$False
-    RecoveryPartition = [bool]$true
+    RecoveryPartition = [bool]$false
     WindowsUpdate = [bool]$true
     WindowsUpdateDrivers = [bool]$false
     WindowsDefenderUpdate = [bool]$false
