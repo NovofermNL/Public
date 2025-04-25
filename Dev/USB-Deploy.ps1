@@ -1,4 +1,6 @@
-﻿#region Initialisatie: Functies voor console-output (logging met opmaak)
+#to Run, boot OSDCloudUSB, at the PS Prompt: iex (irm win11.garytown.com)
+
+#region Initialization
 function Write-DarkGrayDate {
     [CmdletBinding()]
     param (
@@ -6,10 +8,6 @@ function Write-DarkGrayDate {
         [System.String]
         $Message
     )
-    $logPath = "$env:windir\Temp\OSDCloud.log"
-    $logEntry = "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - $Message"
-    Add-Content -Path $logPath -Value $logEntry
-
     if ($Message) {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) $Message"
     }
@@ -17,7 +15,6 @@ function Write-DarkGrayDate {
         Write-Host -ForegroundColor DarkGray "$((Get-Date).ToString('yyyy-MM-dd-HHmmss')) " -NoNewline
     }
 }
-
 function Write-DarkGrayHost {
     [CmdletBinding()]
     param (
@@ -25,22 +22,13 @@ function Write-DarkGrayHost {
         [System.String]
         $Message
     )
-    $logPath = "$env:windir\Temp\OSDCloud.log"
-    $logEntry = "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - $Message"
-    Add-Content -Path $logPath -Value $logEntry
-
     Write-Host -ForegroundColor DarkGray $Message
 }
-
 function Write-DarkGrayLine {
     [CmdletBinding()]
     param ()
-    $logPath = "$env:windir\Temp\OSDCloud.log"
-    Add-Content -Path $logPath -Value ('=' * 72)
-
     Write-Host -ForegroundColor DarkGray '========================================================================='
 }
-
 function Write-SectionHeader {
     [CmdletBinding()]
     param (
@@ -49,148 +37,152 @@ function Write-SectionHeader {
         $Message
     )
     Write-DarkGrayLine
-    Write-DarkGrayDate $Message
+    Write-DarkGrayDate
     Write-Host -ForegroundColor Cyan $Message
-
-    $logPath = "$env:windir\Temp\OSDCloud.log"
-    Add-Content -Path $logPath -Value "[HEADER] $Message"
 }
-
 function Write-SectionSuccess {
     [CmdletBinding()]
     param (
         [Parameter(Position = 0)]
         [System.String]
-        $Message = 'Gelukt!'
+        $Message = 'Success!'
     )
-    Write-DarkGrayDate $Message
+    Write-DarkGrayDate
     Write-Host -ForegroundColor Green $Message
-
-    $logPath = "$env:windir\Temp\OSDCloud.log"
-    Add-Content -Path $logPath -Value "[SUCCESS] $Message"
 }
 #endregion
 
-$ScriptName = 'Novoferm Nederland Windows 11 Deployment'
+$ScriptName = 'win11.garytown.com'
 $ScriptVersion = '25.01.22.1'
-Write-Host -ForegroundColor Green "Scriptnaam: $ScriptName Versie: $ScriptVersion"
-Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start $ScriptName versie $ScriptVersion op $(Get-Date)"
+Write-Host -ForegroundColor Green "$ScriptName $ScriptVersion"
+#iex (irm functions.garytown.com) #Add custom functions used in Script Hosting in GitHub
+#iex (irm functions.osdcloud.com) #Add custom fucntions from OSDCloud
 
+<# Offline Driver Details
+If you extract Driver Packs to your Flash Drive, you can DISM them in while in WinPE and it will make the process much faster, plus ensure driver support for first Boot
+Extract to: OSDCLoudUSB:\OSDCloud\DriverPacks\DISM\$ComputerManufacturer\$ComputerProduct
+Use OSD Module to determine Vars
+$ComputerProduct = (Get-MyComputerProduct)
+$ComputerManufacturer = (Get-MyComputerManufacturer -Brief)
+#>
+
+
+
+#Variables to define the Windows OS / Edition etc to be applied during OSDCloud
 $Product = (Get-MyComputerProduct)
+$Model = (Get-MyComputerModel)
 $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-$OSVersion = 'Windows 11'
-$OSReleaseID = '24H2'
+$OSVersion = 'Windows 11' #Used to Determine Driver Pack
+$OSReleaseID = '24H2' #Used to Determine Driver Pack
 $OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Enterprise'
-$OSActivation = 'Volume'
-$OSLanguage = 'nl-nl'
+$OSEdition = 'Pro'
+$OSActivation = 'Retail'
+$OSLanguage = 'en-us'
 
+
+#Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
-    Restart               = [bool]$False
-    WindowsUpdate         = [bool]$false
-    WindowsUpdateDrivers  = [bool]$false
-    WindowsDefenderUpdate = [bool]$false
-    SetTimeZone           = [bool]$false
-    ClearDiskConfirm      = [bool]$False
+    Restart = [bool]$False
+    RecoveryPartition = [bool]$true
+    OEMActivation = [bool]$True
+    WindowsUpdate = [bool]$true
+    WindowsUpdateDrivers = [bool]$true
+    WindowsDefenderUpdate = [bool]$true
+    SetTimeZone = [bool]$true
+    ClearDiskConfirm = [bool]$False
     ShutdownSetupComplete = [bool]$false
-    SyncMSUpCatDriverUSB  = [bool]$false
+    SyncMSUpCatDriverUSB = [bool]$true
+    CheckSHA1 = [bool]$true
 }
 
+#Testing MS Update Catalog Driver Sync
+#$Global:MyOSDCloud.DriverPackName = 'Microsoft Update Catalog'
+
+#Used to Determine Driver Pack
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
-if ($DriverPack) {
+
+if ($DriverPack){
     $Global:MyOSDCloud.DriverPackName = $DriverPack.Name
 }
+#$Global:MyOSDCloud.DriverPackName = "None"
 
-if ($Manufacturer -match "HP") {
-    Write-Host "HP-systeem gedetecteerd, starten met driver update via HP-script..."
-
-    $tempPath = "$env:TEMP\Invoke-HPDriverUpdate.ps1"
-    Invoke-RestMethod 'https://raw.githubusercontent.com/OSDeploy/OSD/master/Public/OSDCloudTS/Invoke-HPDriverUpdate.ps1' |
-    Out-File -FilePath $tempPath -Encoding UTF8 -Force
-    Write-Host "Script opgeslagen naar: $tempPath"
-
-    $arguments = @(
-        "-ExecutionPolicy", "Bypass",
-        "-NoLogo",
-        "-File", $tempPath
-    )
-    Start-Process powershell.exe -ArgumentList $arguments -Wait -NoNewWindow
-
-    $UseHPIA = $true
-    if ($UseHPIA -and (Test-HPIASupport)) {
-        Write-SectionHeader -Message "HP-apparaat gedetecteerd – HPIA, BIOS en TPM-updates worden ingeschakeld"
-
-        Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1')
-        Manage-HPBiosSettings -SetSettings
-
-        try {
-            if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
-                Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
-            }
-        } catch {
-            Write-DarkGrayHost "FOUT: Install-PackageProvider mislukt: $($_.Exception.Message)"
-        }
-
-        try {
-            if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
-                Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-            }
-        } catch {
-            Write-DarkGrayHost "FOUT: Install-Module PowerShellGet mislukt: $($_.Exception.Message)"
-        }
-
-        try {
-            if (-not (Get-Module -ListAvailable -Name HPCMSL)) {
-                Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-            }
-        } catch {
-            Write-DarkGrayHost "FOUT: Install-Module HPCMSL mislukt: $($_.Exception.Message)"
-        }
-
-        $Global:MyOSDCloud.HPTPMUpdate = [bool]$true
-        $Global:MyOSDCloud.HPIAALL = [bool]$true
-        $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
-        $Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true
+<#If Drivers are expanded on the USB Drive, disable installing a Driver Pack
+if (Test-DISMFromOSDCloudUSB -eq $true){
+    Write-Host "Found Driver Pack Extracted on Cloud USB Flash Drive, disabling Driver Download via OSDCloud" -ForegroundColor Green
+    if ($Global:MyOSDCloud.SyncMSUpCatDriverUSB -eq $true){
+        write-host "Setting DriverPackName to 'Microsoft Update Catalog'"
+        $Global:MyOSDCloud.DriverPackName = 'Microsoft Update Catalog'
+    }
+    else {
+        write-host "Setting DriverPackName to 'None'"
+        $Global:MyOSDCloud.DriverPackName = "None"
     }
 }
+#>
+#Enable HPIA | Update HP BIOS | Update HP TPM
+ 
+if (Test-HPIASupport){
+    Write-SectionHeader -Message "Detected HP Device, Enabling HPIA, HP BIOS and HP TPM Updates"
+    #$Global:MyOSDCloud.DevMode = [bool]$True
+    $Global:MyOSDCloud.HPTPMUpdate = [bool]$True
+    if ($Product -ne '83B2' -and $Model -notmatch "zbook"){$Global:MyOSDCloud.HPIAALL = [bool]$true} #I've had issues with this device and HPIA
+    #{$Global:MyOSDCloud.HPIAALL = [bool]$true}
+    $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
+    #$Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true #In Test 
+    #Set HP BIOS Settings to what I want:
+    iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-HPBiosSettings.ps1)
+    Manage-HPBiosSettings -SetSettings
+}
 
-Write-SectionHeader -Message "OSDCloud-variabelen"
-Write-Output $Global:MyOSDCloud | Out-File "$env:windir\Temp\OSDCloud.log" -Append
+if ($Manufacturer -match "Lenovo") {
+    #Set Lenovo BIOS Settings to what I want:
+    iex (irm https://raw.githubusercontent.com/gwblok/garytown/master/OSD/CloudOSD/Manage-LenovoBiosSettings.ps1)
+    try {
+        Manage-LenovoBIOSSettings -SetSettings
+    }
+    catch {
+        <#Do this if a terminating exception happens#>
+    }
+    
+}
 
-Write-SectionHeader -Message "OSDCloud wordt gestart"
-Write-Host "Start OSDCloud met: Naam = $OSName, Editie = $OSEdition, Activatie = $OSActivation, Taal = $OSLanguage"
-Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
+
+#write variables to console
+Write-SectionHeader "OSDCloud Variables"
+Write-Output $Global:MyOSDCloud
+
+#Update Files in Module that have been updated since last PowerShell Gallery Build (Testing Only)
+#$ModulePath = (Get-ChildItem -Path "$($Env:ProgramFiles)\WindowsPowerShell\Modules\osd" | Where-Object {$_.Attributes -match "Directory"} | Select-Object-Object -Last 1).fullname
+#import-module "$ModulePath\OSD.psd1" -Force
+
+#Launch OSDCloud
+Write-SectionHeader -Message "Starting OSDCloud"
+write-host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
+
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
-Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+Write-SectionHeader -Message "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot"
 
-#Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Install-WindowsUpdate.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1' -Encoding ascii -Force
-Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" 
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Copy-Start.ps1  | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
 
-Copy-Item "X:\OSDCloud\Config\Run-Autopilot-Hash-Upload.cmd" -Destination "C:\Windows\System32\" -Force
-Copy-Item "X:\OSDCloud\Config\Autopilot-Hash-Upload.ps1" -Destination "C:\Windows\System32\" -Force
 
-$OOBECMD = @'
-@echo off
+<#Used in Testing "Beta Gary Modules which I've updated on the USB Stick"
+$OfflineModulePath = (Get-ChildItem -Path "C:\Program Files\WindowsPowerShell\Modules\osd" | Where-Object {$_.Attributes -match "Directory"} | Select-Object -Last 1).fullname
+write-host -ForegroundColor Yellow "Updating $OfflineModulePath using $ModulePath - For Dev Purposes Only"
+copy-item "$ModulePath\*" "$OfflineModulePath"  -Force -Recurse
+#>
+#Copy CMTrace Local:
+<#
+if (Test-path -path "x:\windows\system32\cmtrace.exe"){
+    copy-item "x:\windows\system32\cmtrace.exe" -Destination "C:\Windows\System\cmtrace.exe" -verbose
+}
 
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
-start /wait powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\OSDCleanUp.ps1
-
-exit /b 0
-'@
-$OOBECMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\oobe.cmd' -Encoding ascii -Force
-
-$SetupCompleteCMD = @'
-@echo off
-
-'@
-
-Write-SectionHeader -Message "OSDCloud-proces voltooid, aangepaste acties worden uitgevoerd vóór herstart"
-Write-SectionHeader -Message "Systeem wordt nu afgesloten..."
-Add-Content -Path "$env:windir\Temp\OSDCloud.log" -Value "Systeem afsluiten om $(Get-Date)"
-Restart-Computer -Force
+if ($Manufacturer -match "Lenovo") {
+    $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'
+    Write-Host "Copy-PSModuleToFolder -Name LSUClient to $PowerShellSavePath\Modules"
+    Copy-PSModuleToFolder -Name LSUClient -Destination "$PowerShellSavePath\Modules"
+    Write-Host "Copy-PSModuleToFolder -Name Lenovo.Client.Scripting to $PowerShellSavePath\Modules"
+    Copy-PSModuleToFolder -Name Lenovo.Client.Scripting -Destination "$PowerShellSavePath\Modules"
+}
+#>
+#Restart
+#restart-computer
