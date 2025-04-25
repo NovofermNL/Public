@@ -27,9 +27,21 @@ $RemoveAppx = @(
 )
 
 $LogFile = "C:\Windows\Temp\Remove-AppX.log"
-Function Write-Log { param($msg); "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`t$msg" | Out-File -Append -FilePath $LogFile }
+
+Function Write-Log {
+    param($msg)
+    "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`t$msg" | Out-File -Append -FilePath $LogFile
+}
 
 foreach ($App in $RemoveAppx) {
-    Write-Log "Verwijderen: $App"
-    Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $App } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+    Write-Log "Zoeken naar app: $App"
+    $Package = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $App }
+    
+    if ($Package) {
+        Write-Log "Gevonden: $($Package.DisplayName) - Verwijderen..."
+        $Package | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+        Write-Log "Verwijderd: $App"
+    } else {
+        Write-Log "Niet gevonden: $App"
+    }
 }
