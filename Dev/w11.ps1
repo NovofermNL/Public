@@ -75,8 +75,8 @@ $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
 $OSVersion = 'Windows 11' #Used to Determine Driver Pack
 $OSReleaseID = '24H2' #Used to Determine Driver Pack
 $OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Pro'
-$OSActivation = 'Enterprise'
+$OSEdition = 'Enterprise'
+$OSActivation = 'Volume'
 $OSLanguage = 'nl-nl'
 
 
