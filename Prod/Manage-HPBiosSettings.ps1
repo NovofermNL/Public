@@ -121,7 +121,7 @@ $Global:Settings = (
     "SVM CPU Virtualization,Enable",
     "Secure Boot,Enable",
     "UEFI Boot Options,Enable",
-    "Configure Legacy Support and Secure Boot,Legacy Support Disable and Secure Boot Enable"
+    "Configure Legacy Support and Secure Boot,Legacy Support Disable and Secure Boot Enable",
     "Power On When Lid is Opened,Disable"
 )
 #==============================================================================================================================
