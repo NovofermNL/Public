@@ -82,10 +82,8 @@ function Ensure-PSWindowsUpdate {
 
 function Install-WindowsUpdates {
     try {
-        Write-Host "Zoeken naar geschikte updates (geen previews of uitgesloten KB's)..."
-        Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot `
-            -NotTitle 'Preview' `
-            -NotKBArticleID 'KB890830', 'KB5005463', 'KB4481252' `
+        Write-Host "Zoeken naar updates..."
+Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotTitle 'Preview' -NotKBArticleID 'KB890830', 'KB5005463', 'KB4481252'
     
     }
     catch {
