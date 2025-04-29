@@ -72,17 +72,17 @@ $OSLanguage = 'en-us'
 
 #Set OSDCloud Vars
 $Global:MyOSDCloud = [ordered]@{
-    Restart = [bool]$False
-    RecoveryPartition = [bool]$true
-    OEMActivation = [bool]$True
-    WindowsUpdate = [bool]$true
-    WindowsUpdateDrivers = [bool]$true
+    Restart               = [bool]$False
+    RecoveryPartition     = [bool]$true
+    OEMActivation         = [bool]$True
+    WindowsUpdate         = [bool]$true
+    WindowsUpdateDrivers  = [bool]$true
     WindowsDefenderUpdate = [bool]$true
-    SetTimeZone = [bool]$true
-    ClearDiskConfirm = [bool]$False
+    SetTimeZone           = [bool]$true
+    ClearDiskConfirm      = [bool]$False
     ShutdownSetupComplete = [bool]$false
-    SyncMSUpCatDriverUSB = [bool]$true
-    CheckSHA1 = [bool]$true
+    SyncMSUpCatDriverUSB  = [bool]$true
+    CheckSHA1             = [bool]$true
 }
 
 #Testing MS Update Catalog Driver Sync
@@ -91,7 +91,7 @@ $Global:MyOSDCloud = [ordered]@{
 #Used to Determine Driver Pack
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
 
-if ($DriverPack){
+if ($DriverPack) {
     $Global:MyOSDCloud.DriverPackName = $DriverPack.Name
 }
 #$Global:MyOSDCloud.DriverPackName = "None"
@@ -111,11 +111,11 @@ if (Test-DISMFromOSDCloudUSB -eq $true){
 #>
 #Enable HPIA | Update HP BIOS | Update HP TPM
  
-if (Test-HPIASupport){
+if (Test-HPIASupport) {
     Write-SectionHeader -Message "Detected HP Device, Enabling HPIA, HP BIOS and HP TPM Updates"
     #$Global:MyOSDCloud.DevMode = [bool]$True
     $Global:MyOSDCloud.HPTPMUpdate = [bool]$True
-    if ($Product -ne '83B2' -and $Model -notmatch "zbook"){$Global:MyOSDCloud.HPIAALL = [bool]$true} #I've had issues with this device and HPIA
+    if ($Product -ne '83B2' -and $Model -notmatch "zbook") { $Global:MyOSDCloud.HPIAALL = [bool]$true } #I've had issues with this device and HPIA
     #{$Global:MyOSDCloud.HPIAALL = [bool]$true}
     $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
     #$Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true #In Test 
@@ -147,15 +147,20 @@ Write-SectionHeader -Message "OSDCloud Process Complete, Running Custom Actions 
 Write-Host "Run post-install scrips"
 #Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Post-Install.ps1')
 
+# Kopieer het bestand
 
+Set-Location C:\
+
+Set-ExecutionPolicy -ExecutionPolicy bypass 
+
+Write-Host "Run post-install scrips"
+Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/RemoveAppx.ps1') 
 
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Install-WindowsUpdate.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1' -Encoding ascii -Force
 Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" 
 Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Copy-Start.ps1  | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
-
-
 
 $SetupComplete = @'
 @echo off
@@ -216,7 +221,7 @@ for %%D in (
 
 :: Start copy-start script
 echo Starten van Copy-Start.ps1 >> "%logfile%"
-::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
 
 echo === SetupComplete Afgerond %date% %time% === >> "%logfile%"
 
