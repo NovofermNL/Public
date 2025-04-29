@@ -53,7 +53,7 @@ $RemoveAppx = @(
 
 Write-Host "Bezig met verwijderen van ongewenste AppX apps..." -ForegroundColor Yellow
 Try {
-    Invoke-Expression (Invoke-RestMethod -Uri 'https://functions.osdcloud.com')
+    Invoke-Expression (Invoke-RestMethod 'https://functions.osdcloud.com')
     Remove-AppxOnline -Name $RemoveAppx
 }
 Catch {
