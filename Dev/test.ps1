@@ -138,6 +138,6 @@ $SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd'
 #=======================================================================
 #   Restart-Computer
 #=======================================================================
-Write-Host "Restarting in 20 seconds!" -ForegroundColor Green
-Start-Sleep -Seconds 20
+#Write-Host "Restarting in 20 seconds!" -ForegroundColor Green
+#Start-Sleep -Seconds 20
 #wpeutil reboot
