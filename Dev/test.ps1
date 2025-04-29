@@ -145,7 +145,7 @@ Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation
 Write-SectionHeader -Message "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot"
 
 Write-Host "Run post-install scrips"
-Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/refs/heads/main/Prod/Post-Install.ps1')
+Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Post-Install.ps1')
 
 
 $SetupComplete = @'
@@ -202,4 +202,4 @@ $SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd'
 
 
 #Restart
-restart-computer
+#restart-computer
