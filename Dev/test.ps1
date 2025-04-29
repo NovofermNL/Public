@@ -148,6 +148,15 @@ Write-Host "Run post-install scrips"
 #Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Post-Install.ps1')
 
 
+
+#Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 -ErrorAction Stop | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
+#Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Install-WindowsUpdate.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Install-WindowsUpdate.ps1' -Encoding ascii -Force
+Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin" 
+Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Copy-Start.ps1  | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
+#Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSDCleanUp.ps1' -Encoding ascii -Force
+
+
+
 $SetupComplete = @'
 @echo off
 :: Setup logging
@@ -158,7 +167,6 @@ set logfile=%logfolder%\%logname%
 :: Zorg dat logmap bestaat
 if not exist "%logfolder%" mkdir "%logfolder%"
 
-echo === Start RemoveAppX en Registry Tweaks %date% %time% === > "%logfile%"
 
 :: Zet drive naar C: voor zekerheid
 C:
@@ -175,19 +183,6 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338393Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
 
-:: Remove unwanted AppX apps
-echo Bezig met verwijderen van ongewenste AppX applicaties >> "%logfile%"
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -Command ^
-    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; `
-    Invoke-Expression (Invoke-RestMethod 'https://functions.osdcloud.com'); `
-    $apps = @('Clipchamp.Clipchamp','Microsoft.BingNews','Microsoft.BingSearch','Microsoft.BingWeather','Microsoft.GamingApp','Microsoft.GetHelp','Microsoft.MicrosoftOfficeHub','Microsoft.MicrosoftSolitaireCollection','Microsoft.MicrosoftStickyNotes','Microsoft.OutlookForWindows','Microsoft.PowerAutomateDesktop','Microsoft.Todos','Microsoft.Windows.DevHome','Microsoft.WindowsAlarms','Microsoft.WindowsFeedbackHub','Microsoft.WindowsSoundRecorder','Microsoft.WindowsTerminal','Microsoft.Xbox.TCUI','Microsoft.XboxGamingOverlay','Microsoft.XboxIdentityProvider','Microsoft.XboxSpeechToTextOverlay','Microsoft.YourPhone','Microsoft.ZuneMusic'); `
-    Remove-AppxOnline -Name $apps" >> "%logfile%" 2>&1
-
-:: Download benodigde scripts
-echo Downloaden van start2.bin en Copy-Start.ps1 >> "%logfile%"
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest -Uri 'https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin' -OutFile 'C:\Windows\Setup\scripts\start2.bin'; `
-    Invoke-RestMethod 'https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1' | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii" >> "%logfile%" 2>&1
 
 :: Cleanup logs en folders
 echo === Start Cleanup %date% %time% === >> "%logfile%"
