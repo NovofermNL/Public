@@ -33,7 +33,7 @@ $Params = @{
     OSVersion = "Windows 11"
     OSBuild = "24H2"
     OSEdition = "Pro"
-    OSLanguage = "ml-nl"
+    OSLanguage = "nl-nl"
     OSLicense = "Retail"
     ZTI = $true
 }
@@ -107,6 +107,7 @@ $OOBECMD | Out-File -FilePath 'C:\Windows\System32\OOBE.cmd' -Encoding ascii -Fo
 #================================================
 Write-Host -ForegroundColor Green "Create C:\Windows\Setup\Scripts\SetupComplete.cmd"
 $SetupCompleteCMD = @'
+%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File "%~dp0Copy-Start.ps1.ps1"
 %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File "%~dp0OSDCleanUp.ps1"
 '@
 $SetupCompleteCMD | Out-File -FilePath 'C:\Windows\Setup\Scripts\SetupComplete.cmd' -Encoding ascii -Force
