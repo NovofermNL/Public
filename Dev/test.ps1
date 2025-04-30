@@ -39,6 +39,76 @@ start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setu
 '@
 $OOBECMD | Out-File -FilePath 'C:\Windows\Setup\scripts\oobe.cmd' -Encoding ascii -Force
 
+$SetupComplete = @'
+@echo off
+:: Setup logging
+for /f %%a in ('powershell -NoProfile -Command "(Get-Date).ToString('yyyy-MM-dd-HHmmss')"') do set logname=%%a-Cleanup-Script.log
+set logfolder=C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\OSD
+set logfile=%logfolder%\%logname%
+
+:: Zorg dat logmap bestaat
+if not exist "%logfolder%" mkdir "%logfolder%"
+
+
+:: Zet drive naar C: voor zekerheid
+C:
+
+:: Blokkeer automatische installatie van extra apps
+echo Disabling Content Delivery Manager Features >> "%logfile%"
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v ContentDeliveryAllowed /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v FeatureManagementEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v OemPreInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEverEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SilentInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338393Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
+
+
+:: Cleanup logs en folders
+echo === Start Cleanup %date% %time% === >> "%logfile%"
+if exist "C:\Windows\Temp" (
+    copy /Y "C:\Windows\Temp\*.log" "%logfolder%" >> "%logfile%" 2>&1
+)
+
+if exist "C:\Temp" (
+    copy /Y "C:\Temp\*.log" "%logfolder%" >> "%logfile%" 2>&1
+)
+
+if exist "C:\OSDCloud\Logs" (
+    copy /Y "C:\OSDCloud\Logs\*.log" "%logfolder%" >> "%logfile%" 2>&1
+)
+
+if exist "C:\ProgramData\OSDeploy" (
+    copy /Y "C:\ProgramData\OSDeploy\*.log" "%logfolder%" >> "%logfile%" 2>&1
+)
+
+for %%D in (
+    "C:\OSDCloud"
+    "C:\Drivers"
+    "C:\Intel"
+    "C:\ProgramData\OSDeploy"
+) do (
+    if exist %%D (
+        echo Removing folder %%D >> "%logfile%"
+        rmdir /S /Q %%D >> "%logfile%" 2>&1
+    )
+)
+
+:: Start copy-start script
+echo Starten van Copy-Start.ps1 >> "%logfile%"
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
+
+echo === SetupComplete Afgerond %date% %time% === >> "%logfile%"
+
+exit /b 0
+'@
+
+# Schrijf het SetupComplete script weg
+$SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
+
+
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
