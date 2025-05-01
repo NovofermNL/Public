@@ -17,7 +17,6 @@ $RemoveAppx = @(
     "Microsoft.WindowsAlarms"
     "Microsoft.WindowsFeedbackHub"
     "Microsoft.WindowsSoundRecorder"
-    "Microsoft.WindowsTerminal"
     "Microsoft.Xbox.TCUI"
     "Microsoft.XboxGamingOverlay"
     "Microsoft.XboxIdentityProvider"
