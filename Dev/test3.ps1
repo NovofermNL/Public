@@ -41,14 +41,14 @@ $Global:MyOSDCloud = [ordered]@{
 #   LOCAL DRIVE LETTERS
 #=======================================================================
 function Get-WinPEDrive {
-     $WinPEDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'WINPE' }).DeviceID
-     write-host "Current WINPE drive is: $WinPEDrive"
-     return $WinPEDrive
- }
- function Get-OSDCloudDrive {
-     $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
-     write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
-     return $OSDCloudDrive
+    $WinPEDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'WINPE' }).DeviceID
+    write-host "Current WINPE drive is: $WinPEDrive"
+    return $WinPEDrive
+}
+function Get-OSDCloudDrive {
+    $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
+    write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
+    return $OSDCloudDrive
 }
 #=======================================================================
 #   OSDCLOUD Image
@@ -117,10 +117,12 @@ if ($Manufacturer -match "HP") {
         if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
             Write-Host "NuGet Package Provider succesvol geïnstalleerd."
-        } else {
+        }
+        else {
             Write-Host "NuGet Package Provider is al geïnstalleerd."
         }
-    } catch {
+    }
+    catch {
         Write-Warning "NuGet Package Provider installatie mislukt: $_"
     }
 
@@ -130,10 +132,12 @@ if ($Manufacturer -match "HP") {
         if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
             Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
             Write-Host "PowerShellGet module succesvol geïnstalleerd."
-        } else {
+        }
+        else {
             Write-Host "PowerShellGet module is al geïnstalleerd."
         }
-    } catch {
+    }
+    catch {
         Write-Warning "PowerShellGet installatie mislukt: $_"
     }
 
@@ -142,7 +146,8 @@ if ($Manufacturer -match "HP") {
         Write-Host "HPCMSL module installeren..."
         Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
         Write-Host "HPCMSL module succesvol geïnstalleerd."
-    } catch {
+    }
+    catch {
         Write-Warning "HPCMSL module installatie mislukt: $_"
     }
 
@@ -150,7 +155,8 @@ if ($Manufacturer -match "HP") {
     Set-ExecutionPolicy -Scope Process -ExecutionPolicy $originalPolicy -Force
 
     Write-Host "Installatie van HP-specifieke modules voltooid."
-} else {
+}
+else {
     Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
 }
 #=======================================================================
@@ -161,7 +167,7 @@ Write-Output $Global:MyOSDCloud
 #=======================================================================
 #   Update OSDCloud modules
 #=======================================================================
-$ModulePath = (Get-ChildItem -Path "$($Env:ProgramFiles)\WindowsPowerShell\Modules\osd" | Where-Object {$_.Attributes -match "Directory"} | select -Last 1).fullname
+$ModulePath = (Get-ChildItem -Path "$($Env:ProgramFiles)\WindowsPowerShell\Modules\osd" | Where-Object { $_.Attributes -match "Directory" } | select -Last 1).fullname
 import-module "$ModulePath\OSD.psd1" -Force
 
 #=======================================================================
@@ -184,7 +190,7 @@ Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/O
 
 $OOBECMD = @'
 @echo off
-:: OOBE fase – verwijder standaard apps en wijzig start-menu
+:: OOBE fase verwijder standaard apps en wijzig start-menu
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Remove-AppX.ps1
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File C:\Windows\Setup\scripts\Copy-Start.ps1
 '@
