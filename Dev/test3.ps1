@@ -49,7 +49,7 @@ function Get-WinPEDrive {
      $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
      write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
      return $OSDCloudDrive
-
+}
 #=======================================================================
 #   OSDCLOUD Image
 #=======================================================================
