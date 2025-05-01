@@ -107,10 +107,19 @@ $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OS
 if ($Manufacturer -match "HP") {
     Write-Host "HP hardware gedetecteerd. Start met installatie van benodigde modules..."
 
+    # Schakel Publisher Signature Validation tijdelijk uit
+    $originalPolicy = Get-ExecutionPolicy
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
     # Installeer NuGet Package Provider
     try {
         Write-Host "NuGet Package Provider installeren..."
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
+        if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
+            Write-Host "NuGet Package Provider succesvol geïnstalleerd."
+        } else {
+            Write-Host "NuGet Package Provider is al geïnstalleerd."
+        }
     } catch {
         Write-Warning "NuGet Package Provider installatie mislukt: $_"
     }
@@ -118,7 +127,12 @@ if ($Manufacturer -match "HP") {
     # Installeer PowerShellGet module
     try {
         Write-Host "PowerShellGet module installeren..."
-        Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
+        if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
+            Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
+            Write-Host "PowerShellGet module succesvol geïnstalleerd."
+        } else {
+            Write-Host "PowerShellGet module is al geïnstalleerd."
+        }
     } catch {
         Write-Warning "PowerShellGet installatie mislukt: $_"
     }
@@ -127,9 +141,13 @@ if ($Manufacturer -match "HP") {
     try {
         Write-Host "HPCMSL module installeren..."
         Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+        Write-Host "HPCMSL module succesvol geïnstalleerd."
     } catch {
         Write-Warning "HPCMSL module installatie mislukt: $_"
     }
+
+    # Herstel oorspronkelijke Execution Policy
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy $originalPolicy -Force
 
     Write-Host "Installatie van HP-specifieke modules voltooid."
 } else {
