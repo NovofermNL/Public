@@ -40,42 +40,15 @@ $Global:MyOSDCloud = [ordered]@{
 #=======================================================================
 #   LOCAL DRIVE LETTERS
 #=======================================================================
-# Forceer gebruik van TLS 1.2 voor veilig downloaden van modules
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-# Controleer of de machine van HP is
-if ($Manufacturer -match "HP") {
-    Write-Host "HP hardware gedetecteerd. Start met installatie van benodigde modules..."
-
-    # Installeer NuGet Package Provider
-    try {
-        Write-Host "NuGet Package Provider installeren..."
-        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
-    } catch {
-        Write-Warning "NuGet Package Provider installatie mislukt: $_"
-    }
-
-    # Installeer PowerShellGet module
-    try {
-        Write-Host "PowerShellGet module installeren..."
-        Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
-    } catch {
-        Write-Warning "PowerShellGet installatie mislukt: $_"
-    }
-
-    # Installeer HPCMSL module (met SkipPublisherCheck als workaround)
-    try {
-        Write-Host "HPCMSL module installeren..."
-        Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-    } catch {
-        Write-Warning "HPCMSL module installatie mislukt: $_"
-    }
-
-    Write-Host "Installatie van HP-specifieke modules voltooid."
-} else {
-    Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
-}
-
+function Get-WinPEDrive {
+     $WinPEDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'WINPE' }).DeviceID
+     write-host "Current WINPE drive is: $WinPEDrive"
+     return $WinPEDrive
+ }
+ function Get-OSDCloudDrive {
+     $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
+     write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
+     return $OSDCloudDrive
 
 #=======================================================================
 #   OSDCLOUD Image
@@ -127,24 +100,41 @@ if ($uselocalimage -eq $true) {
 #=======================================================================
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
 
-if ($DriverPack) {
-    $Global:MyOSDCloud.DriverPackName = $DriverPack.Name
-}
-$UseHPIA = $true #disable this for faster deployment, but less up-to-date
-if ($Manufacturer -match "HP" -and $UseHPIA -eq $true) {
-    #$Global:MyOSDCloud.DevMode = [bool]$True
-    $Global:MyOSDCloud.HPTPMUpdate = [bool]$True
-    { $Global:MyOSDCloud.HPIAALL = [bool]$true }
-    $Global:MyOSDCloud.HPBIOSUpdate = [bool]$true
-    $Global:MyOSDCloud.HPCMSLDriverPackLatest = [bool]$true
-}
+# Forceer gebruik van TLS 1.2 voor veilig downloaden van modules
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# Controleer of de machine van HP is
 if ($Manufacturer -match "HP") {
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force 
-    Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force
-    Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense
-}
+    Write-Host "HP hardware gedetecteerd. Start met installatie van benodigde modules..."
 
+    # Installeer NuGet Package Provider
+    try {
+        Write-Host "NuGet Package Provider installeren..."
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
+    } catch {
+        Write-Warning "NuGet Package Provider installatie mislukt: $_"
+    }
+
+    # Installeer PowerShellGet module
+    try {
+        Write-Host "PowerShellGet module installeren..."
+        Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
+    } catch {
+        Write-Warning "PowerShellGet installatie mislukt: $_"
+    }
+
+    # Installeer HPCMSL module (met SkipPublisherCheck als workaround)
+    try {
+        Write-Host "HPCMSL module installeren..."
+        Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
+    } catch {
+        Write-Warning "HPCMSL module installatie mislukt: $_"
+    }
+
+    Write-Host "Installatie van HP-specifieke modules voltooid."
+} else {
+    Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
+}
 #=======================================================================
 #   Write OSDCloud VARS to Console
 #=======================================================================
