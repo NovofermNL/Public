@@ -33,7 +33,7 @@ Benodigdheden:
 # ======= Instellingen =======
 $DryRun = $true           
 $EnableLogging = $true     
-$serialListUrl = "https://raw.githubusercontent.com/NovofermNL/Public/main/serials2delete.txt"
+$serialListUrl = "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Entra/DeleteSerials.txt"
 $logPath = "C:\Windows\Temp\Remove-IntuneAutopilotDevices"
 $logFile = Join-Path $logPath ("log-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".txt")
 
