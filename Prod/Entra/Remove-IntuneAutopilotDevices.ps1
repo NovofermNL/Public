@@ -1,7 +1,6 @@
 <#
 Scriptnaam: Remove-IntuneAutopilotDevices.ps1
 Datum: 23-05-2025
-Auteur: Novoferm Nederland BV
 
 Beschrijving:
 Dit script verwijdert apparaten uit Microsoft Intune, Windows Autopilot en Entra ID (Azure AD) op basis van een lijst met serienummers.
