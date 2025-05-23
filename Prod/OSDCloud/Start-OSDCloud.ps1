@@ -22,10 +22,10 @@ $Global:MyOSDCloud = [ordered]@{
     Restart               = [bool]$false
     RecoveryPartition     = [bool]$false
     OEMActivation         = [bool]$true 
-    WindowsUpdate         = [bool]$false #temporarily disabled same thing almost 10 minutes
-    MSCatalogFirmware     = [bool]$false #temporarily disabled no impact
-    WindowsUpdateDrivers  = [bool]$false #temporarily disabled this is causing long delays on the getting ready screen before the oobe (almost 10 minutes)
-    WindowsDefenderUpdate = [bool]$false #temporarily disabled same thing almost 10 minutes
+    WindowsUpdate         = [bool]$true
+    MSCatalogFirmware     = [bool]$true 
+    WindowsUpdateDrivers  = [bool]$true 
+    WindowsDefenderUpdate = [bool]$false 
     SetTimeZone           = [bool]$false
     SkipClearDisk         = [bool]$false
     ClearDiskConfirm      = [bool]$false
@@ -34,8 +34,6 @@ $Global:MyOSDCloud = [ordered]@{
     CheckSHA1             = [bool]$true
     ZTI                   = [bool]$true
 }
-
-#for a more complete rollout of the OSDCloud process, you can enable the following options: WindowsUpdate, MSCatalogFirmware, WindowsUpdateDrivers, WindowsDefenderUpdate, SyncMSUpCatDriverUSB
 
 #=======================================================================
 #   LOCAL DRIVE LETTERS
