@@ -1,38 +1,37 @@
 <#
-Scriptnaam: Remove-IntuneAutopilotDevices.ps1
+Scriptnaam: Remove-EntraDevicesComplete.ps1
 Datum: 23-05-2025
+Auteur: Novoferm Nederland BV
 
 Beschrijving:
-Dit script verwijdert apparaten uit Microsoft Intune, Windows Autopilot en Entra ID (Azure AD) op basis van een lijst met serienummers.
-De serienummers worden ingeladen vanuit een centraal tekstbestand op GitHub.
+Verwijdert apparaten uit Microsoft Intune, Windows Autopilot en Entra ID (Azure AD) op basis van een lijst met serienummers.
+De lijst wordt centraal ingeladen vanuit GitHub.
 
 Gebruik:
-1. Zet de lijst met serienummers in het bestand: 
-   https://github.com/NovofermNL/Public/blob/main/serials2delete.txt 
+1. Zet de lijst met serienummers in:
+   https://github.com/NovofermNL/Public/blob/main/Prod/Entra/DeleteSerials.txt 
    (één serienummer per regel)
 
-2. Stel bovenaan het script de volgende opties in:
-   - `$DryRun = $true` → alleen simuleren, er worden GEEN apparaten verwijderd.
-   - `$DryRun = $false` → daadwerkelijk verwijderen van apparaten.
-   - `$EnableLogging = $true` → log alle acties en fouten naar C:\Windows\Temp\Remove-IntuneAutopilotDevices\.
-   - `$EnableLogging = $false` → sla geen logbestanden op.
+2. Pas zo nodig de opties bovenaan aan:
+   - `$DryRun = $true` → Simulatie, geen verwijdering.
+   - `$DryRun = $false` → Echte verwijdering.
+   - `$EnableLogging = $true` → Logging activeren.
+   - `$EnableLogging = $false` → Geen logbestand aanmaken.
 
-3. Voer het script uit als beheerder via PowerShell 5.1
+3. Uitvoeren als administrator in **PowerShell 5.1**
 
 Benodigdheden:
-- PowerShell moet toegang hebben tot internet (voor module-installatie en GitHub-bestand).
-- Het account waarmee je inlogt op Graph moet de juiste API-rechten hebben:
-    • Device.ReadWrite.All  
-    • DeviceManagementManagedDevices.ReadWrite.All  
-    • Directory.ReadWrite.All  
-    • DeviceManagementServiceConfig.ReadWrite.All
+- Internettoegang
+- Microsoft Graph API-machtigingen:
+  • Device.ReadWrite.All  
+  • DeviceManagementManagedDevices.ReadWrite.All  
+  • Directory.ReadWrite.All  
+  • DeviceManagementServiceConfig.ReadWrite.All
 #>
 
-
-
 # ======= Instellingen =======
-$DryRun = $true           
-$EnableLogging = $true     
+$DryRun = $true
+$EnableLogging = $true
 $serialListUrl = "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/Entra/DeleteSerials.txt"
 $logPath = "C:\Windows\Temp\Remove-IntuneAutopilotDevices"
 $logFile = Join-Path $logPath ("log-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".txt")
@@ -50,14 +49,12 @@ function Log {
 # ======= Begin Script =======
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Benodigde modules
 $modulesRequired = @(
     "Microsoft.Graph",
     "Microsoft.Graph.Intune",
     "Microsoft.Graph.DeviceManagement"
 )
 
-# NuGet en PSGallery
 if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
     Install-PackageProvider -Name NuGet -Force
 }
@@ -71,19 +68,17 @@ foreach ($module in $modulesRequired) {
     }
 }
 
-# Verbind met Microsoft Graph
 Connect-MgGraph -Scopes "Device.ReadWrite.All", "DeviceManagementManagedDevices.ReadWrite.All", "Directory.ReadWrite.All", "DeviceManagementServiceConfig.ReadWrite.All"
 
-# Inlezen van serienummers vanaf GitHub
+# Serienummers ophalen
 try {
     Log "Laad serienummers vanaf: $serialListUrl"
     $importedSerials = (Invoke-WebRequest -Uri $serialListUrl -UseBasicParsing).Content -split "`n"
 } catch {
-    Log "Fout bij ophalen van serienummers vanaf GitHub: $_"
+    Log "FOUT bij ophalen van serienummers vanaf GitHub: $($_)"
     exit 1
 }
 
-# Verwerk elk serienummer
 foreach ($serial in $importedSerials) {
     $serial = $serial.Trim()
     if (-not $serial) { continue }
@@ -91,57 +86,54 @@ foreach ($serial in $importedSerials) {
     try {
         $device = Get-MgDeviceManagementManagedDevice -Filter "serialNumber eq '$serial'" 
         if ($device) {
-            Log "Start met verwerking van apparaat: $($device.DeviceName) (Serial: $serial)"
+            Log "Start met verwerking van apparaat: $($device.DeviceName) (Serial: ${serial})"
 
-            # Intune verwijderen
             try {
                 if ($DryRun) {
-                    Log "[DryRun] Intune-registratie zou worden verwijderd voor: $serial"
+                    Log "[DryRun] Intune-registratie zou worden verwijderd voor: ${serial}"
                 } else {
-                    Log "Verwijder Intune-registratie voor: $serial"
+                    Log "Verwijder Intune-registratie voor: ${serial}"
                     Remove-MgDeviceManagementManagedDevice -ManagedDeviceId $device.Id -Verbose -ErrorAction Stop
                     Start-Sleep -Seconds 10
                 }
             } catch {
-                Log "FOUT bij Intune-verwijdering voor $serial: $_"
+                Log "FOUT bij Intune-verwijdering voor ${serial}: $($_)"
             }
 
-            # Autopilot verwijderen
             try {
                 $autopilotDevice = Get-MgDeviceManagementWindowsAutopilotDeviceIdentity | Where-Object { $_.SerialNumber -eq $serial }
                 if ($autopilotDevice) {
                     if ($DryRun) {
-                        Log "[DryRun] Autopilot-registratie zou worden verwijderd voor: $serial"
+                        Log "[DryRun] Autopilot-registratie zou worden verwijderd voor: ${serial}"
                     } else {
-                        Log "Verwijder Autopilot-registratie voor: $serial"
+                        Log "Verwijder Autopilot-registratie voor: ${serial}"
                         Remove-MgDeviceManagementWindowsAutopilotDeviceIdentity -WindowsAutopilotDeviceIdentityId $autopilotDevice.Id
                         Start-Sleep -Seconds 10
                     }
                 }
             } catch {
-                Log "FOUT bij Autopilot-verwijdering voor $serial: $_"
+                Log "FOUT bij Autopilot-verwijdering voor ${serial}: $($_)"
             }
 
-            # Entra ID verwijderen
             try {
                 $entraIDValue = $device.AzureAdDeviceId
                 $entraIDData = Get-MgDevice -Filter "DeviceId eq '$entraIDValue'"
                 if ($DryRun) {
-                    Log "[DryRun] Entra ID-registratie zou worden verwijderd voor: $serial"
+                    Log "[DryRun] Entra ID-registratie zou worden verwijderd voor: ${serial}"
                 } else {
-                    Log "Verwijder Entra ID-registratie voor: $serial"
+                    Log "Verwijder Entra ID-registratie voor: ${serial}"
                     Remove-MgDevice -DeviceId $entraIDData.Id
                     Start-Sleep -Seconds 10
                 }
             } catch {
-                Log "FOUT bij Entra ID-verwijdering voor $serial: $_"
+                Log "FOUT bij Entra ID-verwijdering voor ${serial}: $($_)"
             }
 
         } else {
-            Log "GEEN apparaat gevonden voor serienummer: $serial"
+            Log "GEEN apparaat gevonden voor serienummer: ${serial}"
         }
     } catch {
-        Log "FOUT bij verwerking van $serial: $_"
+        Log "FOUT bij verwerking van ${serial}: $($_)"
     }
 }
 
