@@ -139,7 +139,7 @@ if ($Manufacturer -match "HP") {
         Write-Warning "PowerShellGet installatie mislukt: $_"
     }
 
-    # Installeer HPCMSL module (met SkipPublisherCheck als workaround)
+    # Installeer HPCMSL module
     try {
         Write-Host "HPCMSL module installeren..."
         Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
