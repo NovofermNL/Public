@@ -49,7 +49,7 @@ function Get-OSDCloudDrive {
     return $OSDCloudDrive
 }
 #=======================================================================
-#   OSDCLOUD Image (Revised Logic)
+#   OSDCLOUD Image 
 #=======================================================================
 $uselocalimage = $true
 $OSDCloudDrive = Get-OSDCloudDrive
