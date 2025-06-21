@@ -44,9 +44,17 @@ function Get-WinPEDrive {
     return $WinPEDrive
 }
 function Get-OSDCloudDrive {
-    $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
-    write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
-    return $OSDCloudDrive
+    # Zoek naar bekende OSDCloud paden (USB of X:)
+    $drives = Get-PSDrive -PSProvider FileSystem
+    foreach ($drive in $drives) {
+        if (Test-Path "$($drive.Root)\OSDCloud\OS") {
+            Write-Host "OSDCloud-structuur gevonden op: $($drive.Root)"
+            return $drive.Root.TrimEnd('\')
+        }
+    }
+
+    Write-Warning "Geen OSDCloud directory gevonden op aangesloten volumes."
+    return $null
 }
 #=======================================================================
 #   OSDCLOUD Image 
@@ -153,7 +161,7 @@ if ($Manufacturer -match "HP") {
     Write-Host "Installatie van HP-specifieke modules voltooid."
 }
 else {
-    Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
+    Write-Host "Geen HP hardware gedetecteerd. HP-specifieke stappen worden overgeslagen."
 }
 #=======================================================================
 #   Write OSDCloud VARS to Console
@@ -172,7 +180,7 @@ import-module "$ModulePath\OSD.psd1" -Force
 Write-Host "Starting OSDCloud" -ForegroundColor Green
 write-host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+Start-OSDCloud -ImageFile $Global:MyOSDCloud.ImageFileFullName -OSImageIndex $Global:MyOSDCloud.OSImageIndex
 
 write-host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
 
