@@ -44,67 +44,52 @@ function Get-WinPEDrive {
     return $WinPEDrive
 }
 function Get-OSDCloudDrive {
-    # Zoek naar bekende OSDCloud paden (USB of X:)
-    $drives = Get-PSDrive -PSProvider FileSystem
-    foreach ($drive in $drives) {
-        if (Test-Path "$($drive.Root)\OSDCloud\OS") {
-            Write-Host "OSDCloud-structuur gevonden op: $($drive.Root)"
-            return $drive.Root.TrimEnd('\')
-        }
-    }
-
-    Write-Warning "Geen OSDCloud directory gevonden op aangesloten volumes."
-    return $null
+    $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
+    write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
+    return $OSDCloudDrive
 }
 #=======================================================================
-#   Lokaal WIM-bestand zoeken
+#   OSDCLOUD Image
 #=======================================================================
 $uselocalimage = $true
+$Windowsversion = "$OSVersion $OSReleaseID"
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
+#dynamically find the latest version based on the variables set in the beginning of the script
+if ($uselocalimage -eq $true) {
+    # Find the latest month WIM file
+    $months = @("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "okt", "nov", "dec")
+    $wimlist = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
+    write-host "Available wimfiles: $wimlist"
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse | Where-Object { $_.Name -match "$Windowsversion" }
+    $latestMonth = $months | Where-Object { $wimFiles.Name -match $_ } | Select-Object -Last 1
 
-if ($uselocalimage -eq $true -and $OSDCloudDrive) {
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -ErrorAction SilentlyContinue
-
-    if ($wimFiles.Count -eq 0) {
-        Write-Host -ForegroundColor Red "Geen .wim-bestanden gevonden in $OSDCloudDrive\OSDCloud\OS\"
-        $uselocalimage = $false
-        Start-Sleep -Seconds 5
-    }
-    elseif ($wimFiles.Count -eq 1) {
-        $ImageFileItem = $wimFiles[0]
-        Write-Host -ForegroundColor Green "Één WIM-bestand gevonden: $($ImageFileItem.Name)"
+    if ($latestMonth) {
+        $WIMName = "$Windowsversion - $latestMonth.wim"
+        Write-Host -ForegroundColor Green -BackgroundColor Black "Latest WIM file found: $WIMName This WimFile will be used for the installation"
     }
     else {
-        Write-Host -ForegroundColor Yellow "Meerdere WIM-bestanden gevonden:"
-        $selection = $wimFiles | Select-Object -Property Name, FullName | Out-GridView -Title "Kies een WIM-bestand voor installatie" -PassThru
-        if ($null -eq $selection) {
-            Write-Host -ForegroundColor Red "Geen selectie gemaakt. Installatie afgebroken."
-            exit
-        }
-        $ImageFileItem = Get-Item -Path $selection.FullName
-    }
-
-    if ($ImageFileItem) {
-        $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-        $Global:MyOSDCloud.ImageFileName = $ImageFileItem.Name
-        $Global:MyOSDCloud.ImageFileFullName = $ImageFileItem.FullName
-        $Global:MyOSDCloud.OSImageIndex = 5
+        Write-Host -ForegroundColor Red -BackgroundColor Black "No WIM files found for $Windowsversion using esd as backup."
+        Write-Host -ForegroundColor Red -BackgroundColor Black "PLEASE ADD THE WIM FILE TO THE OSDCLOUD USB DRIVE TO SURPRESS THIS MESSAGE"
+        $uselocalimage = $false
+        Start-Sleep -Seconds 10
     }
 }
 
-# Als bovenstaande faalt: zoek naar een .wim-bestand ergens op X:\
-if (-not $Global:MyOSDCloud.ImageFileFullName) {
-    Write-Warning "Geen WIM-bestand gevonden via OSDCloud USB, zoeken in X:\"
-
-    $wimFile = Get-ChildItem -Path "X:\" -Recurse -Filter *.wim -ErrorAction SilentlyContinue | Select-Object -First 1
-
-    if ($wimFile) {
-        Write-Host -ForegroundColor Cyan "WIM-bestand gevonden op X: $($wimFile.FullName)"
-        $Global:MyOSDCloud.ImageFileFullName = $wimFile.FullName
-        $Global:MyOSDCloud.OSImageIndex = 5
-    } else {
-        Write-Warning "Geen .wim gevonden op X:\"
+if ($uselocalimage -eq $true) {
+    $ImageFileItem = Find-OSDCloudFile -Name $WIMName  -Path "\OSDCloud\OS\"
+    if ($ImageFileItem) {
+        write-host "Variable uselocalimage is set to true. The installer will try to find and use the wim file called: $WIMName"
+        $ImageFileItem = $ImageFileItem | Where-Object { $_.FullName -notlike "C*" } | Where-Object { $_.FullName -notlike "X*" } | Select-Object -First 1
+        if ($ImageFileItem) {
+            $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
+            $ImageFileFullName = $ImageFileItem.FullName
+            
+            $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
+            $Global:MyOSDCloud.ImageFileName = $ImageFileName
+            $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+            $Global:MyOSDCloud.OSImageIndex = 5
+        }
     }
 }
 
@@ -170,7 +155,7 @@ if ($Manufacturer -match "HP") {
     Write-Host "Installatie van HP-specifieke modules voltooid."
 }
 else {
-    Write-Host "Geen HP hardware gedetecteerd. HP-specifieke stappen worden overgeslagen."
+    Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
 }
 #=======================================================================
 #   Write OSDCloud VARS to Console
@@ -189,7 +174,7 @@ import-module "$ModulePath\OSD.psd1" -Force
 Write-Host "Starting OSDCloud" -ForegroundColor Green
 write-host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 
-Start-OSDCloud -ImageFile $Global:MyOSDCloud.ImageFileFullName -OSImageIndex $Global:MyOSDCloud.OSImageIndex
+Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
 write-host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
 
@@ -199,9 +184,6 @@ Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phas
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/Files/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
 Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Copy-Start.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
-Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Configure-OutlookAutodiscover-OnPrem.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\onfigure-OutlookAutodiscover-OnPrem.ps1' -Encoding ascii -Force
-Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Create-ScheduledTask.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Create-ScheduledTask.ps1' -Encoding ascii -Force
-
 #invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
 
 $OOBECMD = @'
@@ -266,7 +248,6 @@ for %%D in (
 :: Start copy-start script
 echo Starten van Copy-Start.ps1 >> "%logfile%"
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
-:: start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Create-ScheduledTask.ps1" >> "%logfile%" 2>&1
 
 echo === SetupComplete Afgerond %date% %time% === >> "%logfile%"
 
@@ -283,7 +264,7 @@ Start-Sleep -Seconds 20
 wpeutil reboot
 
 #   Herstart naar OOBE
-#Restart-Computer
+Restart-Computer
 
 ###### EIDNE TEST ######
 
