@@ -44,24 +44,32 @@ function Get-WinPEDrive {
     return $WinPEDrive
 }
 function Get-OSDCloudDrive {
-    $OSDCloudDrive = (Get-WmiObject Win32_LogicalDisk | Where-Object { $_.VolumeName -eq 'OSDCloudUSB' }).DeviceID
-    write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
-    return $OSDCloudDrive
+    # Zoek naar bekende OSDCloud paden (USB of X:)
+    $drives = Get-PSDrive -PSProvider FileSystem
+    foreach ($drive in $drives) {
+        if (Test-Path "$($drive.Root)\OSDCloud\OS") {
+            Write-Host "OSDCloud-structuur gevonden op: $($drive.Root)"
+            return $drive.Root.TrimEnd('\')
+        }
+    }
+
+    Write-Warning "Geen OSDCloud directory gevonden op aangesloten volumes."
+    return $null
 }
 #=======================================================================
-#   OSDCLOUD Image 
+#   Lokaal WIM-bestand zoeken
 #=======================================================================
 $uselocalimage = $true
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
 
-if ($uselocalimage -eq $true) {
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
+if ($uselocalimage -eq $true -and $OSDCloudDrive) {
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -ErrorAction SilentlyContinue
 
     if ($wimFiles.Count -eq 0) {
         Write-Host -ForegroundColor Red "Geen .wim-bestanden gevonden in $OSDCloudDrive\OSDCloud\OS\"
         $uselocalimage = $false
-        Start-Sleep -Seconds 10
+        Start-Sleep -Seconds 5
     }
     elseif ($wimFiles.Count -eq 1) {
         $ImageFileItem = $wimFiles[0]
@@ -78,18 +86,27 @@ if ($uselocalimage -eq $true) {
     }
 
     if ($ImageFileItem) {
-        $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
-        $ImageFileFullName = $ImageFileItem.FullName
-
-        Write-Host -ForegroundColor Green "WIM-bestand geselecteerd: $ImageFileName"
-
         $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-        $Global:MyOSDCloud.ImageFileName = $ImageFileName
-        $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+        $Global:MyOSDCloud.ImageFileName = $ImageFileItem.Name
+        $Global:MyOSDCloud.ImageFileFullName = $ImageFileItem.FullName
         $Global:MyOSDCloud.OSImageIndex = 5
     }
 }
 
+# Als bovenstaande faalt: zoek naar een .wim-bestand ergens op X:\
+if (-not $Global:MyOSDCloud.ImageFileFullName) {
+    Write-Warning "Geen WIM-bestand gevonden via OSDCloud USB, zoeken in X:\"
+
+    $wimFile = Get-ChildItem -Path "X:\" -Recurse -Filter *.wim -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if ($wimFile) {
+        Write-Host -ForegroundColor Cyan "WIM-bestand gevonden op X: $($wimFile.FullName)"
+        $Global:MyOSDCloud.ImageFileFullName = $wimFile.FullName
+        $Global:MyOSDCloud.OSImageIndex = 5
+    } else {
+        Write-Warning "Geen .wim gevonden op X:\"
+    }
+}
 
 #=======================================================================
 #   Specific Driver Pack
@@ -153,7 +170,7 @@ if ($Manufacturer -match "HP") {
     Write-Host "Installatie van HP-specifieke modules voltooid."
 }
 else {
-    Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
+    Write-Host "Geen HP hardware gedetecteerd. HP-specifieke stappen worden overgeslagen."
 }
 #=======================================================================
 #   Write OSDCloud VARS to Console
@@ -172,7 +189,7 @@ import-module "$ModulePath\OSD.psd1" -Force
 Write-Host "Starting OSDCloud" -ForegroundColor Green
 write-host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 
-Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
+Start-OSDCloud -ImageFile $Global:MyOSDCloud.ImageFileFullName -OSImageIndex $Global:MyOSDCloud.OSImageIndex
 
 write-host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
 
