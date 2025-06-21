@@ -57,7 +57,7 @@ function Get-OSDCloudDrive {
     return $null
 }
 #=======================================================================
-#   OSDCLOUD Image 
+#   Lokaal WIM-bestand zoeken
 #=======================================================================
 $uselocalimage = $true
 $OSDCloudDrive = Get-OSDCloudDrive
@@ -93,18 +93,18 @@ if ($uselocalimage -eq $true -and $OSDCloudDrive) {
     }
 }
 
-# Als er geen OSDCloud USB-drive gevonden werd, kijk dan of er een .wim in TEMP is (bijv. na extractie van scripts.osdcloud.com)
+# Als bovenstaande faalt: zoek naar een .wim-bestand ergens op X:\
 if (-not $Global:MyOSDCloud.ImageFileFullName) {
-    $ScriptRoot = "$env:TEMP\osdworkspace-scripts-main"
-    $wimFile = Get-ChildItem -Path "$ScriptRoot" -Recurse -Filter *.wim -ErrorAction SilentlyContinue | Select-Object -First 1
+    Write-Warning "Geen WIM-bestand gevonden via OSDCloud USB, zoeken in X:\"
+
+    $wimFile = Get-ChildItem -Path "X:\" -Recurse -Filter *.wim -ErrorAction SilentlyContinue | Select-Object -First 1
 
     if ($wimFile) {
-        Write-Host -ForegroundColor Cyan "WIM-bestand gevonden in TEMP: $($wimFile.FullName)"
+        Write-Host -ForegroundColor Cyan "WIM-bestand gevonden op X: $($wimFile.FullName)"
         $Global:MyOSDCloud.ImageFileFullName = $wimFile.FullName
         $Global:MyOSDCloud.OSImageIndex = 5
-    }
-    else {
-        Write-Warning "Geen .wim gevonden in $ScriptRoot"
+    } else {
+        Write-Warning "Geen .wim gevonden op X:\"
     }
 }
 
