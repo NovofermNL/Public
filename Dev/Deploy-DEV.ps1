@@ -49,53 +49,64 @@ function Get-OSDCloudDrive {
     return $OSDCloudDrive
 }
 #=======================================================================
-#   OSDCLOUD Image
+#   OSDCLOUD Image met keuzemenu
 #=======================================================================
 $uselocalimage = $true
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
 
 if ($uselocalimage -eq $true) {
-    # Zoek alle WIM-bestanden
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -File
 
-    if ($wimFiles.Count -gt 0) {
-        # Gebruik het eerste bruikbare WIM-bestand dat niet op C: of X: staat
-        $ImageFileItem = $wimFiles | Where-Object { $_.FullName -notlike "C*" -and $_.FullName -notlike "X*" } | Select-Object -First 1
+    if ($wimFiles.Count -eq 0) {
+        Write-Warning "Geen WIM-bestanden gevonden in $($OSDCloudDrive)\OSDCloud\OS\"
+        $uselocalimage = $false
+        return
+    }
 
-        if ($ImageFileItem) {
-            $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
-            $ImageFileFullName = $ImageFileItem.FullName
+    Write-Host ""
+    Write-Host "Beschikbare WIM-bestanden:" -ForegroundColor Cyan
 
-            Write-Host ""
-            Write-Host "Gevonden WIM-bestand:" -ForegroundColor Cyan
-            Write-Host "$ImageFileFullName" -ForegroundColor Yellow
-            Write-Host ""
+    # Toon bestanden met index
+    $index = 1
+    $wimFiles | ForEach-Object {
+        Write-Host "$index. $($_.FullName)" -ForegroundColor Yellow
+        $index++
+    }
 
-            $confirm = Read-Host "Is dit het juiste bestand? (ja/nee)"
-            if ($confirm -ne "ja") {
-                Write-Warning "Installatie afgebroken door gebruiker. Geen WIM geselecteerd."
-                $uselocalimage = $false
-                return
-            }
+    # Vraag om selectie
+    $selection = Read-Host "`nTyp het nummer van het bestand dat je wilt gebruiken (1-$($wimFiles.Count))"
 
-            # Bevestiging → variabelen instellen
-            Write-Host -ForegroundColor Green -BackgroundColor Black "WIM-bestand geaccepteerd: $ImageFileName"
-            $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-            $Global:MyOSDCloud.ImageFileName = $ImageFileName
-            $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
-            $Global:MyOSDCloud.OSImageIndex = 5  # Pas dit aan indien nodig
-        }
-        else {
-            Write-Host -ForegroundColor Red -BackgroundColor Black "Geen bruikbaar WIM-bestand gevonden (mogelijk vanwege filter op C:\ of X:\)."
+    # Valideer input
+    if ($selection -as [int] -and $selection -ge 1 -and $selection -le $wimFiles.Count) {
+        $ImageFileItem = $wimFiles[$selection - 1]
+        $ImageFileName = $ImageFileItem.Name
+        $ImageFileFullName = $ImageFileItem.FullName
+
+        # Bevestiging
+        Write-Host "`nGeselecteerde WIM: $ImageFileFullName" -ForegroundColor Green
+
+        $confirm = Read-Host "Weet je zeker dat je dit bestand wilt gebruiken? (ja/nee)"
+        if ($confirm -ne "ja") {
+            Write-Warning "Installatie afgebroken door gebruiker."
             $uselocalimage = $false
+            return
         }
+
+        # Variabelen instellen
+        $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
+        $Global:MyOSDCloud.ImageFileName = $ImageFileName
+        $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+        $Global:MyOSDCloud.OSImageIndex = 5  # Pas aan indien nodig
+
+        Write-Host "`nWIM-bestand succesvol geselecteerd: $ImageFileName" -ForegroundColor Green
     }
     else {
-        Write-Host -ForegroundColor Red -BackgroundColor Black "Geen WIM-bestanden gevonden in $($OSDCloudDrive)\OSDCloud\OS\"
+        Write-Warning "Ongeldige selectie. Script afgebroken."
         $uselocalimage = $false
     }
 }
+
 
 #=======================================================================
 #   Specific Driver Pack
