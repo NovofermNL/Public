@@ -63,13 +63,13 @@ $uselocalimage = $true
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
 
-if ($uselocalimage -eq $true) {
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
+if ($uselocalimage -eq $true -and $OSDCloudDrive) {
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -ErrorAction SilentlyContinue
 
     if ($wimFiles.Count -eq 0) {
         Write-Host -ForegroundColor Red "Geen .wim-bestanden gevonden in $OSDCloudDrive\OSDCloud\OS\"
         $uselocalimage = $false
-        Start-Sleep -Seconds 10
+        Start-Sleep -Seconds 5
     }
     elseif ($wimFiles.Count -eq 1) {
         $ImageFileItem = $wimFiles[0]
@@ -86,18 +86,27 @@ if ($uselocalimage -eq $true) {
     }
 
     if ($ImageFileItem) {
-        $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
-        $ImageFileFullName = $ImageFileItem.FullName
-
-        Write-Host -ForegroundColor Green "WIM-bestand geselecteerd: $ImageFileName"
-
         $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-        $Global:MyOSDCloud.ImageFileName = $ImageFileName
-        $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+        $Global:MyOSDCloud.ImageFileName = $ImageFileItem.Name
+        $Global:MyOSDCloud.ImageFileFullName = $ImageFileItem.FullName
         $Global:MyOSDCloud.OSImageIndex = 5
     }
 }
 
+# Als er geen OSDCloud USB-drive gevonden werd, kijk dan of er een .wim in TEMP is (bijv. na extractie van scripts.osdcloud.com)
+if (-not $Global:MyOSDCloud.ImageFileFullName) {
+    $ScriptRoot = "$env:TEMP\osdworkspace-scripts-main"
+    $wimFile = Get-ChildItem -Path "$ScriptRoot" -Recurse -Filter *.wim -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if ($wimFile) {
+        Write-Host -ForegroundColor Cyan "WIM-bestand gevonden in TEMP: $($wimFile.FullName)"
+        $Global:MyOSDCloud.ImageFileFullName = $wimFile.FullName
+        $Global:MyOSDCloud.OSImageIndex = 5
+    }
+    else {
+        Write-Warning "Geen .wim gevonden in $ScriptRoot"
+    }
+}
 
 #=======================================================================
 #   Specific Driver Pack
