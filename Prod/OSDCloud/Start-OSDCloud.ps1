@@ -49,49 +49,64 @@ function Get-OSDCloudDrive {
     return $OSDCloudDrive
 }
 #=======================================================================
-#   OSDCLOUD Image
+#   OSDCLOUD Image met keuzemenu
 #=======================================================================
 $uselocalimage = $true
-$Windowsversion = "$OSVersion $OSReleaseID"
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
-#dynamically find the latest version based on the variables set in the beginning of the script
-if ($uselocalimage -eq $true) {
-    # Find the latest month WIM file
-    $months = @("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "okt", "nov", "dec")
-    $wimlist = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
-    write-host "Available wimfiles: $wimlist"
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse | Where-Object { $_.Name -match "$Windowsversion" }
-    $latestMonth = $months | Where-Object { $wimFiles.Name -match $_ } | Select-Object -Last 1
 
-    if ($latestMonth) {
-        $WIMName = "$Windowsversion - $latestMonth.wim"
-        Write-Host -ForegroundColor Green -BackgroundColor Black "Latest WIM file found: $WIMName This WimFile will be used for the installation"
+if ($uselocalimage -eq $true) {
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -File
+
+    if ($wimFiles.Count -eq 0) {
+        Write-Warning "Geen WIM-bestanden gevonden in $($OSDCloudDrive)\OSDCloud\OS\"
+        $uselocalimage = $false
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Beschikbare WIM-bestanden:" -ForegroundColor Cyan
+
+    # Toon bestanden met index
+    $index = 1
+    $wimFiles | ForEach-Object {
+        Write-Host "$index. $($_.FullName)" -ForegroundColor Yellow
+        $index++
+    }
+
+    # Vraag om selectie
+    $selection = Read-Host "`nTyp het nummer van het bestand dat je wilt gebruiken (1-$($wimFiles.Count))"
+
+    # Valideer input
+    if ($selection -as [int] -and $selection -ge 1 -and $selection -le $wimFiles.Count) {
+        $ImageFileItem = $wimFiles[$selection - 1]
+        $ImageFileName = $ImageFileItem.Name
+        $ImageFileFullName = $ImageFileItem.FullName
+
+        # Bevestiging
+        Write-Host "`nGeselecteerde WIM: $ImageFileFullName" -ForegroundColor Green
+
+        $confirm = Read-Host "Weet je zeker dat je dit bestand wilt gebruiken? (ja/nee)"
+        if ($confirm -ne "ja") {
+            Write-Warning "Installatie afgebroken door gebruiker."
+            $uselocalimage = $false
+            return
+        }
+
+        # Variabelen instellen
+        $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
+        $Global:MyOSDCloud.ImageFileName = $ImageFileName
+        $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+        $Global:MyOSDCloud.OSImageIndex = 5  # Pas aan indien nodig
+
+        Write-Host "`nWIM-bestand succesvol geselecteerd: $ImageFileName" -ForegroundColor Green
     }
     else {
-        Write-Host -ForegroundColor Red -BackgroundColor Black "No WIM files found for $Windowsversion using esd as backup."
-        Write-Host -ForegroundColor Red -BackgroundColor Black "PLEASE ADD THE WIM FILE TO THE OSDCLOUD USB DRIVE TO SURPRESS THIS MESSAGE"
+        Write-Warning "Ongeldige selectie. Script afgebroken."
         $uselocalimage = $false
-        Start-Sleep -Seconds 10
     }
 }
 
-if ($uselocalimage -eq $true) {
-    $ImageFileItem = Find-OSDCloudFile -Name $WIMName  -Path "\OSDCloud\OS\"
-    if ($ImageFileItem) {
-        write-host "Variable uselocalimage is set to true. The installer will try to find and use the wim file called: $WIMName"
-        $ImageFileItem = $ImageFileItem | Where-Object { $_.FullName -notlike "C*" } | Where-Object { $_.FullName -notlike "X*" } | Select-Object -First 1
-        if ($ImageFileItem) {
-            $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
-            $ImageFileFullName = $ImageFileItem.FullName
-            
-            $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-            $Global:MyOSDCloud.ImageFileName = $ImageFileName
-            $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
-            $Global:MyOSDCloud.OSImageIndex = 5
-        }
-    }
-}
 
 #=======================================================================
 #   Specific Driver Pack
@@ -184,8 +199,7 @@ Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phas
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/Files/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
 Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Copy-Start.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
-Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Configure-OutlookAutodiscover-OnPrem.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\onfigure-OutlookAutodiscover-OnPrem.ps1' -Encoding ascii -Force
-Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Create-ScheduledTask.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Create-ScheduledTask.ps1' -Encoding ascii -Force
+#Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Create-ScheduledTask.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Create-ScheduledTask.ps1' -Encoding ascii -Force
 
 #invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
 
@@ -217,6 +231,10 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v SearchOnTas
 reg add "HKEY_USERS\.DEFAULT\Control Panel\Desktop" /v AutoEndTasks /t REG_SZ /d 1 /f
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableCloudOptimizedContent /t REG_DWORD /d 1 /f
 reg add "HKLM\Software\Policies\Microsoft\SQMClient\Windows" /v CEIPEnable /t REG_DWORD /d 0 /f
+reg add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeHttpsRootDomain /t REG_DWORD /d 1 /f
+reg add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeExplicitO365Endpoint /t REG_DWORD /d 1 /f
+
+
 
 :: Cleanup logs en folders
 echo === Start Cleanup %date% %time% === >> "%logfile%"
