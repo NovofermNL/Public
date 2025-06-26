@@ -40,7 +40,7 @@ function Apply-CustomTweaks {
     }
 
     # Visuele effecten uitschakelen
-    $regBase = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
+    $regBase = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects"
     $keys = @(
         "ControlAnimations", "AnimateMinMax", "TaskbarAnimations", "DWMAeroPeekEnabled",
         "MenuAnimation", "TooltipAnimation", "SelectionFade", "DWMSaveThumbnailEnabled",
@@ -49,11 +49,11 @@ function Apply-CustomTweaks {
         "DropShadow"
     )
     foreach ($key in $keys) {
-        Set-ItemProperty -Path "$regBase\$key" -Name 'DefaultValue' -Value 0 -Type DWord -Force
+        Set-ItemProperty -Path "$regBase\\$key" -Name 'DefaultValue' -Value 0 -Type DWord -Force
     }
 
     # Optioneel extern script uitvoeren
-    $extraScript = "C:\Windows\Setup\Scripts\unattend-01.cmd"
+    $extraScript = "C:\\Windows\\Setup\\Scripts\\unattend-01.cmd"
     if (Test-Path $extraScript) {
         Write-Host "Extern script uitvoeren: $extraScript"
         Start-Process -FilePath $extraScript -Wait
@@ -61,3 +61,5 @@ function Apply-CustomTweaks {
 
     Write-Host "Aangepaste tweaks voltooid."
 }
+
+Apply-CustomTweaks
