@@ -193,6 +193,11 @@ Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation
 
 write-host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
 
+$DaRTScriptPath = "$env:TEMP\DaRT.ps1"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/osdcloudcline/OSDCloud/main/Extra%20Files/DaRT/DaRT.ps1" -OutFile $DaRTScriptPath
+& $DaRTScriptPath
+
+
 ##### TEST #####
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
 
@@ -224,19 +229,6 @@ if not exist "%logfolder%" mkdir "%logfolder%"
 
 :: Zet drive naar C: 
 C:
-
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\USB" /v DisableSelectiveSuspend /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Dsh" /v AllowNewsAndInterests /t REG_DWORD /d 0 /f
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v SearchOnTaskbarMode /t REG_DWORD /d 0 /f
-reg add "HKEY_USERS\.DEFAULT\Control Panel\Desktop" /v AutoEndTasks /t REG_SZ /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableCloudOptimizedContent /t REG_DWORD /d 1 /f
-reg add "HKLM\Software\Policies\Microsoft\SQMClient\Windows" /v CEIPEnable /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeHttpsRootDomain /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeExplicitO365Endpoint /t REG_DWORD /d 1 /f
-
-
-
 :: Cleanup logs en folders
 echo === Start Cleanup %date% %time% === >> "%logfile%"
 if exist "C:\Windows\Temp" (
