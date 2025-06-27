@@ -8,11 +8,11 @@ Write-Host -ForegroundColor Green "$ScriptName $ScriptVersion"
 $Product = (Get-MyComputerProduct)
 $Model = (Get-MyComputerModel)
 $Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-$OSVersion = 'Windows 11' #Used to Determine Driver Pack
-$OSReleaseID = '24H2' #Used to Determine Driver Pack
+$OSVersion = 'Windows 11'
+$OSReleaseID = '24H2'
 $OSName = 'Windows 11 24H2 x64'
 $OSEdition = 'Pro'
-$OSActivation = 'Volume'
+$OSActivation = 'Retail'
 $OSLanguage = 'nl-nl'
 
 #=======================================================================
@@ -21,11 +21,11 @@ $OSLanguage = 'nl-nl'
 $Global:MyOSDCloud = [ordered]@{
     Restart               = [bool]$false
     RecoveryPartition     = [bool]$false
-    OEMActivation         = [bool]$true 
-    WindowsUpdate         = [bool]$false #temporarily disabled same thing almost 10 minutes
-    MSCatalogFirmware     = [bool]$false #temporarily disabled no impact
-    WindowsUpdateDrivers  = [bool]$false #temporarily disabled this is causing long delays on the getting ready screen before the oobe (almost 10 minutes)
-    WindowsDefenderUpdate = [bool]$false #temporarily disabled same thing almost 10 minutes
+    OEMActivation         = [bool]$true
+    WindowsUpdate         = [bool]$true
+    MSCatalogFirmware     = [bool]$true
+    WindowsUpdateDrivers  = [bool]$true
+    WindowsDefenderUpdate = [bool]$false
     SetTimeZone           = [bool]$false
     SkipClearDisk         = [bool]$false
     ClearDiskConfirm      = [bool]$false
@@ -34,8 +34,6 @@ $Global:MyOSDCloud = [ordered]@{
     CheckSHA1             = [bool]$true
     ZTI                   = [bool]$true
 }
-
-#for a more complete rollout of the OSDCloud process, you can enable the following options: WindowsUpdate, MSCatalogFirmware, WindowsUpdateDrivers, WindowsDefenderUpdate, SyncMSUpCatDriverUSB
 
 #=======================================================================
 #   LOCAL DRIVE LETTERS
@@ -51,49 +49,64 @@ function Get-OSDCloudDrive {
     return $OSDCloudDrive
 }
 #=======================================================================
-#   OSDCLOUD Image
+#   OSDCLOUD Image met keuzemenu
 #=======================================================================
 $uselocalimage = $true
-$Windowsversion = "$OSVersion $OSReleaseID"
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
-#dynamically find the latest version based on the variables set in the beginning of the script
-if ($uselocalimage -eq $true) {
-    # Find the latest month WIM file
-    $months = @("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "okt", "nov", "dec")
-    $wimlist = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse
-    write-host "Available wimfiles: $wimlist"
-    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse | Where-Object { $_.Name -match "$Windowsversion" }
-    $latestMonth = $months | Where-Object { $wimFiles.Name -match $_ } | Select-Object -Last 1
 
-    if ($latestMonth) {
-        $WIMName = "$Windowsversion - $latestMonth.wim"
-        Write-Host -ForegroundColor Green -BackgroundColor Black "Latest WIM file found: $WIMName This WimFile will be used for the installation"
+if ($uselocalimage -eq $true) {
+    $wimFiles = Get-ChildItem -Path "$OSDCloudDrive\OSDCloud\OS\" -Filter "*.wim" -Recurse -File
+
+    if ($wimFiles.Count -eq 0) {
+        Write-Warning "Geen WIM-bestanden gevonden in $($OSDCloudDrive)\OSDCloud\OS\"
+        $uselocalimage = $false
+        return
+    }
+
+    Write-Host ""
+    Write-Host "Beschikbare WIM-bestanden:" -ForegroundColor Cyan
+
+    # Toon bestanden met index
+    $index = 1
+    $wimFiles | ForEach-Object {
+        Write-Host "$index. $($_.FullName)" -ForegroundColor Yellow
+        $index++
+    }
+
+    # Vraag om selectie
+    $selection = Read-Host "`nTyp het nummer van het bestand dat je wilt gebruiken (1-$($wimFiles.Count))"
+
+    # Valideer input
+    if ($selection -as [int] -and $selection -ge 1 -and $selection -le $wimFiles.Count) {
+        $ImageFileItem = $wimFiles[$selection - 1]
+        $ImageFileName = $ImageFileItem.Name
+        $ImageFileFullName = $ImageFileItem.FullName
+
+        # Bevestiging
+        Write-Host "`nGeselecteerde WIM: $ImageFileFullName" -ForegroundColor Green
+
+        $confirm = Read-Host "Weet je zeker dat je dit bestand wilt gebruiken? (ja/nee)"
+        if ($confirm -ne "ja") {
+            Write-Warning "Installatie afgebroken door gebruiker."
+            $uselocalimage = $false
+            return
+        }
+
+        # Variabelen instellen
+        $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
+        $Global:MyOSDCloud.ImageFileName = $ImageFileName
+        $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
+        $Global:MyOSDCloud.OSImageIndex = 5  # Pas aan indien nodig
+
+        Write-Host "`nWIM-bestand succesvol geselecteerd: $ImageFileName" -ForegroundColor Green
     }
     else {
-        Write-Host -ForegroundColor Red -BackgroundColor Black "No WIM files found for $Windowsversion using esd as backup."
-        Write-Host -ForegroundColor Red -BackgroundColor Black "PLEASE ADD THE WIM FILE TO THE OSDCLOUD USB DRIVE TO SURPRESS THIS MESSAGE"
+        Write-Warning "Ongeldige selectie. Script afgebroken."
         $uselocalimage = $false
-        Start-Sleep -Seconds 10
     }
 }
 
-if ($uselocalimage -eq $true) {
-    $ImageFileItem = Find-OSDCloudFile -Name $WIMName  -Path "\OSDCloud\OS\"
-    if ($ImageFileItem) {
-        write-host "Variable uselocalimage is set to true. The installer will try to find and use the wim file called: $WIMName"
-        $ImageFileItem = $ImageFileItem | Where-Object { $_.FullName -notlike "C*" } | Where-Object { $_.FullName -notlike "X*" } | Select-Object -First 1
-        if ($ImageFileItem) {
-            $ImageFileName = Split-Path -Path $ImageFileItem.FullName -Leaf
-            $ImageFileFullName = $ImageFileItem.FullName
-            
-            $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
-            $Global:MyOSDCloud.ImageFileName = $ImageFileName
-            $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
-            $Global:MyOSDCloud.OSImageIndex = 5
-        }
-    }
-}
 
 #=======================================================================
 #   Specific Driver Pack
@@ -141,7 +154,7 @@ if ($Manufacturer -match "HP") {
         Write-Warning "PowerShellGet installatie mislukt: $_"
     }
 
-    # Installeer HPCMSL module (met SkipPublisherCheck als workaround)
+    # Installeer HPCMSL module
     try {
         Write-Host "HPCMSL module installeren..."
         Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
@@ -184,8 +197,11 @@ write-host "OSDCloud Process Complete, Running Custom Actions From Script Before
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
 
 #Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/Remove-AppX.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
-Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
-Invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSDCloudModules/Copy-Start.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
+Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/Files/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
+Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Copy-Start.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
+Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Custom-Tweaks.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Custom-Tweaks.ps1' -Encoding ascii -Force
+#Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Create-ScheduledTask.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Create-ScheduledTask.ps1' -Encoding ascii -Force
+
 #invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
 
 $OOBECMD = @'
@@ -206,22 +222,8 @@ set logfile=%logfolder%\%logname%
 :: Zorg dat logmap bestaat
 if not exist "%logfolder%" mkdir "%logfolder%"
 
-
-:: Zet drive naar C: voor zekerheid
+:: Zet drive naar C: 
 C:
-
-:: Blokkeer automatische installatie van extra apps
-echo Disabling Content Delivery Manager Features >> "%logfile%"
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v ContentDeliveryAllowed /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v FeatureManagementEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v OemPreInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v PreInstalledAppsEverEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SilentInstalledAppsEnabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338393Enabled /t REG_DWORD /d 0 /f >> "%logfile%" 2>&1
-
 
 :: Cleanup logs en folders
 echo === Start Cleanup %date% %time% === >> "%logfile%"
@@ -256,6 +258,9 @@ for %%D in (
 :: Start copy-start script
 echo Starten van Copy-Start.ps1 >> "%logfile%"
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Custom-Tweaks.ps1" >> "%logfile%" 2>&1
+
+::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Create-ScheduledTask.ps1" >> "%logfile%" 2>&1
 
 echo === SetupComplete Afgerond %date% %time% === >> "%logfile%"
 
