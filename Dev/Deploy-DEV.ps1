@@ -262,7 +262,8 @@ for %%D in (
 :: Start copy-start script
 echo Starten van Copy-Start.ps1 >> "%logfile%"
 start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Copy-Start.ps1" >> "%logfile%" 2>&1
-start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Create-ScheduledTask.ps1" >> "%logfile%" 2>&1
+::start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Create-ScheduledTask.ps1" >> "%logfile%" 2>&1
+start /wait powershell.exe -NoLogo -ExecutionPolicy Bypass -File "C:\Windows\Setup\scripts\Custom-Tweaks.ps1" >> "%logfile%" 2>&1
 
 echo === SetupComplete Afgerond %date% %time% === >> "%logfile%"
 
