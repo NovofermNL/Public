@@ -12,7 +12,7 @@ $OSVersion = 'Windows 11'
 $OSReleaseID = '24H2'
 $OSName = 'Windows 11 24H2 x64'
 $OSEdition = 'Pro'
-$OSActivation = 'Volume'
+$OSActivation = 'Retail'
 $OSLanguage = 'nl-nl'
 
 #=======================================================================
