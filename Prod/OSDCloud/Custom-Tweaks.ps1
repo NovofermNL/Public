@@ -19,6 +19,9 @@ function Apply-CustomTweaks {
     # Zoekvak op taakbalk verbergen
     reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v SearchOnTaskbarMode /t REG_DWORD /d 0 /f
 
+    # Recommended-sectie in Startmenu verbergen
+    reg.exe add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /v HideRecommendedSection /t REG_DWORD /d 1 /f
+
     # Taken automatisch beëindigen voor .DEFAULT gebruiker
     reg.exe add "HKEY_USERS\.DEFAULT\Control Panel\Desktop" /v AutoEndTasks /t REG_SZ /d 1 /f
 
