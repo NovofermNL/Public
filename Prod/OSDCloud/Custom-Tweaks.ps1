@@ -33,7 +33,7 @@ function Apply-CustomTweaks {
 
     # Autodiscover tweaks voor Outlook 2016
     reg.exe add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeHttpsRootDomain /t REG_DWORD /d 1 /f
-    reg.exe add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeExplicitO365Endpoint /t REG_DWORD /d 1 /f
+    #reg.exe add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeExplicitO365Endpoint /t REG_DWORD /d 1 /f
 
     # Startmenu-pinning script uitvoeren
     $startPinScript = 'C:\Windows\Setup\Scripts\SetStartPins.ps1'
