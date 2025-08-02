@@ -51,7 +51,7 @@ function Get-OSDCloudDrive {
 #=======================================================================
 #   OSDCLOUD Image met keuzemenu
 #=======================================================================
-$uselocalimage = $true
+$uselocalimage = $false
 $OSDCloudDrive = Get-OSDCloudDrive
 Write-Host -ForegroundColor Green -BackgroundColor Black "UseLocalImage is set to: $uselocalimage"
 
