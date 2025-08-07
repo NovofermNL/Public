@@ -1,4 +1,4 @@
-function Apply-CustomTweaks {
+function Apply-NFCustomTweaks {
     Write-Host "Toepassen van aangepaste registerinstellingen en scripts..."
 
     # Remote Desktop inschakelen
