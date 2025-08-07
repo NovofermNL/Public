@@ -1,4 +1,4 @@
-function Update-HPDrivers {
+function NF-Update-HPDrivers {
     <#
     .SYNOPSIS
         Update HP drivers op basis van het OSDCloudTS script van OSDeploy.
