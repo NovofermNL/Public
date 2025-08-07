@@ -1,4 +1,15 @@
-# Auto-import alle functies uit de Functions-map
-Get-ChildItem -Path "$PSScriptRoot\Functions" -Filter *.ps1 | ForEach-Object {
-    . $_.FullName
+#lijst van functies
+$functionList = @(
+    "Install-WindowsUpdates"
+    "Update-HPDrivers.ps1"
+)
+
+foreach ($function in $functionList) {
+    $url = "https://raw.githubusercontent.com/NovofermNL/Public/main/NovoTools/Functions/$function.ps1"
+    try {
+        Invoke-Expression (Invoke-RestMethod -Uri $url -UseBasicParsing)
+    }
+    catch {
+        Write-Warning "Kon functie niet laden: $function - $_"
+    }
 }
