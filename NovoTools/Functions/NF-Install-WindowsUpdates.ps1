@@ -1,4 +1,4 @@
-function Install-WindowsUpdates {
+function NF-Install-WindowsUpdates {
 
     param (
         [string]$UpdatePath = "\\Novoferm.info\dfs\Repository\OS\CU"
