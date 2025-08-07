@@ -1,7 +1,7 @@
-#lijst van functies
+# Lijst van functies (zonder .ps1 extensie!)
 $functionList = @(
     "Install-WindowsUpdates"
-    "Update-HPDrivers.ps1"
+    "Update-HPDrivers"
 )
 
 foreach ($function in $functionList) {
