@@ -1,10 +1,12 @@
 function Install-WindowsUpdates {
+
     param (
         [string]$UpdatePath = "\\Novoferm.info\dfs\Repository\OS\CU"
     )
+
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $LogPath    = "C:\Windows\Temp\CU-Installatie.log"
-    $Updates    = Get-ChildItem -Path $UpdatePath -Filter *.msu
+    $LogPath = "C:\Windows\Temp\CU-Installatie.log"
+    $Updates = Get-ChildItem -Path $UpdatePath -Filter *.msu
 
     if (-not $Updates) {
         Write-Warning "Geen .msu bestanden gevonden in $UpdatePath"
@@ -16,19 +18,21 @@ function Install-WindowsUpdates {
 
     foreach ($Update in $Updates) {
         $Counter++
-        $ProgressMessage = "Bezig met update $Counter van $Total: $($Update.Name)"
+        $ProgressMessage = "Bezig met update $Counter van $Total $($Update.Name)"
 
         Write-Progress -Activity "Updates installeren" `
-                       -Status $ProgressMessage `
-                       -PercentComplete (($Counter / $Total) * 100)
+            -Status $ProgressMessage `
+            -PercentComplete (($Counter / $Total) * 100)
 
-        Add-Content $LogPath "[$(Get-Date -Format 'dd-MM-yyyy HH:mm:ss')] Start: $($Update.Name)"
+        $timestamp = (Get-Date).ToString('dd-MM-yyyy HH:mm:ss')
+        Add-Content $LogPath "[$timestamp] Start: $($Update.Name)"
 
         Start-Process -FilePath "wusa.exe" `
-                      -ArgumentList "`"$($Update.FullName)`" /quiet /norestart" `
-                      -Wait
+            -ArgumentList "`"$($Update.FullName)`" /quiet /norestart" `
+            -Wait
 
-        Add-Content $LogPath "[$(Get-Date -Format 'dd-MM-yyyy HH:mm:ss')] Klaar: $($Update.Name)"
+        $timestamp = (Get-Date).ToString('dd-MM-yyyy HH:mm:ss')
+        Add-Content $LogPath "[$timestamp] Klaar: $($Update.Name)"
     }
 
     Write-Progress -Activity "Updates installeren" -Completed
