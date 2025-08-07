@@ -1,5 +1,8 @@
-function NF-Install-WindowsUpdates {
-
+    <#
+        Installeert .msu-updates vanuit een opgegeven pad.
+    #>
+    
+function Install-NFWindowsUpdates {
     param (
         [string]$UpdatePath = "\\Novoferm.info\dfs\Repository\OS\CU"
     )
