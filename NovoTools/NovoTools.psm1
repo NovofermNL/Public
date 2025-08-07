@@ -2,6 +2,7 @@
 $functionList = @(
     "NF-Install-WindowsUpdates"
     "NF-Update-HPDrivers"
+    "NF-Default-Tweaks"
 )
 
 foreach ($function in $functionList) {
