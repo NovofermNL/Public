@@ -1,4 +1,4 @@
-function Update-HPDrivers{
+function Update-NFHPDrivers{
 
     if ((Get-CimInstance -Class Win32_ComputerSystem).Manufacturer -like "*HP*") {
         Write-Host "HP-systeem gedetecteerd, starten met driver update..."
