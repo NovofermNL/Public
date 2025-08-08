@@ -1,22 +1,27 @@
-foreach ($function in $functionList) {
-    $url = "https://raw.githubusercontent.com/NovofermNL/Public/main/NovoTools/Functions/$function.ps1"
+# Automatisch alle functies ophalen uit de Functions-map in je repo
+$functionsApiUrl = "https://api.github.com/repos/NovofermNL/Public/contents/NovoTools/Functions"
 
-    try {
-        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -Method Head -ErrorAction Stop
-        if ($response.StatusCode -ne 200) {
-            Write-Warning "Functiebestand niet gevonden: $url"
-            continue
+try {
+    $files = Invoke-RestMethod -Uri $functionsApiUrl -UseBasicParsing
+} catch {
+    Write-Warning "Kan de lijst met functies niet ophalen: $_"
+    return
+}
+
+foreach ($file in $files) {
+    if ($file.name -like '*.ps1') {
+        $functionName = [System.IO.Path]::GetFileNameWithoutExtension($file.name)
+        $url = $file.download_url
+
+        try {
+            $code = Invoke-RestMethod -Uri $url -UseBasicParsing
+            if (-not [string]::IsNullOrWhiteSpace($code)) {
+                Invoke-Expression $code
+            } else {
+                Write-Warning "Leeg bestand: $functionName ($url)"
+            }
+        } catch {
+            Write-Warning "Kon functie niet laden: $functionName - $_"
         }
-    }
-    catch {
-        Write-Warning "Functiebestand niet gevonden: $url"
-        continue
-    }
-
-    try {
-        Invoke-Expression (Invoke-RestMethod -Uri $url -UseBasicParsing)
-    }
-    catch {
-        Write-Warning "Kon functie niet laden: $function - $_"
     }
 }
