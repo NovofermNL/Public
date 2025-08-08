@@ -1,4 +1,4 @@
-function Apply-NFCustomTweaks {
+function Install-NFCustomTweaks{
     Write-Host "Toepassen van aangepaste registerinstellingen en scripts..."
 
     # Remote Desktop inschakelen
@@ -34,7 +34,7 @@ function Apply-NFCustomTweaks {
     # Autodiscover tweaks voor Outlook 2016
     reg.exe add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeHttpsRootDomain /t REG_DWORD /d 1 /f
     #reg.exe add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeExplicitO365Endpoint /t REG_DWORD /d 1 /f
-
+}
     # Startmenu-pinning script uitvoeren
     $startPinScript = 'C:\Windows\Setup\Scripts\SetStartPins.ps1'
     if (Test-Path $startPinScript) {
