@@ -1,4 +1,4 @@
-function Remove-AppxOnline {
+function Remove-NFAppxOnline {
     [CmdletBinding()]
     Param (
         # Appx-pakketten selecteren in GridView om te verwijderen uit het Windows-image
