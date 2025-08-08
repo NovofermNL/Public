@@ -1,7 +1,14 @@
 foreach ($function in $functionList) {
     $url = "https://raw.githubusercontent.com/NovofermNL/Public/main/NovoTools/Functions/$function.ps1"
 
-    if (-not (Invoke-WebRequest -Uri $url -UseBasicParsing -Method Head -ErrorAction SilentlyContinue)) {
+    try {
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -Method Head -ErrorAction Stop
+        if ($response.StatusCode -ne 200) {
+            Write-Warning "Functiebestand niet gevonden: $url"
+            continue
+        }
+    }
+    catch {
         Write-Warning "Functiebestand niet gevonden: $url"
         continue
     }
