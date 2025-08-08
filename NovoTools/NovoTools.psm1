@@ -1,7 +1,6 @@
 # Lijst van functies (zonder .ps1 extensie!)
 $functionList = @(
     "Install-NFWindowsUpdates"
-    "Install-NFCustomTweaks"
 )
 
 foreach ($function in $functionList) {
