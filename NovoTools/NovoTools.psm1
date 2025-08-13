@@ -1,7 +1,6 @@
 <# 
     Module: NovoTools.psm1
-    Beschrijving: Laadt alle functies uit de Functions-map in de GitHub-repo, 
-    waarbij alleen functiedefinities worden ingeladen en geen top-level code wordt uitgevoerd.
+    Beschrijving: Laadt alle functies uit de Functions-map.
     Auteur: Novoferm Nederland BV
     Datum: 13-08-2025
 #>
