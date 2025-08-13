@@ -1,57 +1,53 @@
-<# 
-    Module: NovoTools.psm1
-    Beschrijving: Laadt alle functies uit de Functions-map.
-    Auteur: Novoferm Nederland BV
-    Datum: 13-08-2025
-#>
+<# Module: NovoTools.psm1
+ Beschrijving: Laadt alleen functiedefinities uit de Functions-map in de GitHub-repo
+ Auteur: Novoferm Nederland BV  Datum: 13-08-2025 #>
 
-# GitHub API URL naar de Functions-map
-$functionsApiUrl = "https://api.github.com/repos/NovofermNL/Public/contents/NovoTools/Functions"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+$Headers = @{
+  'User-Agent'      = 'NovoTools-Loader'
+  'Accept'          = 'application/vnd.github.v3+json'
+}
+
+$functionsApiUrl = 'https://api.github.com/repos/NovofermNL/Public/contents/NovoTools/Functions'
 
 try {
-    $files = Invoke-RestMethod -Uri $functionsApiUrl -UseBasicParsing
+    $files = Invoke-RestMethod -Uri $functionsApiUrl -Headers $Headers -UseBasicParsing
 } catch {
-    Write-Warning "Kan de lijst met functies niet ophalen: $_"
+    Write-Warning "Kan de lijst met functies niet ophalen: $($_.Exception.Message)"
     return
 }
 
 foreach ($file in $files) {
     if ($file.name -like '*.ps1') {
         try {
-            $code = Invoke-RestMethod -Uri $file.download_url -UseBasicParsing
-
+            $code = Invoke-RestMethod -Uri $file.download_url -Headers $Headers -UseBasicParsing
             if ([string]::IsNullOrWhiteSpace($code)) {
                 Write-Warning "Leeg bestand: $($file.name) ($($file.download_url))"
                 continue
             }
 
-            # Parse de inhoud naar AST (Abstract Syntax Tree)
             $null = $tokens = $errors = $null
-            $ast = [System.Management.Automation.Language.Parser]::ParseInput($code, [ref]$tokens, [ref]$errors)
-
+            $ast  = [System.Management.Automation.Language.Parser]::ParseInput($code, [ref]$tokens, [ref]$errors)
             if ($errors.Count -gt 0) {
                 Write-Warning "Syntaxfout in $($file.name): $($errors[0].Message)"
                 continue
             }
 
-            # Zoek alleen naar functiedefinities
-            $funcAsts = $ast.FindAll(
-                { param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] },
-                $true
-            )
-
+            $funcAsts = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             if ($funcAsts.Count -eq 0) {
-                Write-Warning "Geen functies gevonden in $($file.name); mogelijk top-level code. Sla over."
+                Write-Warning "Geen functies gevonden in $($file.name); sla over (mogelijk top-level code)."
                 continue
             }
 
-            # Laad elke functie in de huidige sessie
             foreach ($func in $funcAsts) {
                 Invoke-Expression $func.Extent.Text
             }
-
         } catch {
-            Write-Warning "Kon functie niet laden: $($file.name) - $_"
+            Write-Warning "Kon functie niet laden: $($file.name) - $($_.Exception.Message)"
         }
     }
 }
+
+# (Optioneel) specifieker exporteren:
+# Export-ModuleMember -Function Install-NFWindowsUpdates, Invoke-NFOobeUpdateWindows, Remove-AppxOnline, Remove-FeedbackHub, Remove-NFAppxBloatware
