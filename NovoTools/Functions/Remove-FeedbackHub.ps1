@@ -1,9 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 Scriptnaam    : Remove-FeedbackHub.ps1
-Datum         : 13-08-2025
 Beschrijving  : Verwijdert Feedback Hub voor bestaande én nieuwe gebruikers. Functie-only, met -WhatIf/-Confirm.
-Organisatie   : Novoferm Nederland BV
 #>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
