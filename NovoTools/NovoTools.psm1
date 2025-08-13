@@ -1,25 +1,31 @@
-<# Module: NovoTools.psm1
- Beschrijving: Laadt alleen functiedefinities uit de Functions-map in de GitHub-repo
- Auteur: Novoferm Nederland BV  Datum: 13-08-2025 #>
+<# 
+    Module:       NovoTools.psm1
+    Beschrijving: Laadt alle FUNCTIES uit NovoTools/Functions via GitHub.
+    Organisatie:  Novoferm Nederland BV
+    Datum:        13-08-2025
+#>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# -- Benodigde headers voor GitHub API --
 $Headers = @{
-  'User-Agent'      = 'NovoTools-Loader'
-  'Accept'          = 'application/vnd.github.v3+json'
+    'User-Agent' = 'NovoTools-Loader'
+    'Accept'     = 'application/vnd.github.v3+json'
 }
 
-$functionsApiUrl = 'https://api.github.com/repos/NovofermNL/Public/contents/NovoTools/Functions'
+# -- Ophalen lijst met function-bestanden --
+$ApiUrl = 'https://api.github.com/repos/NovofermNL/Public/contents/NovoTools/Functions'
 
 try {
-    $files = Invoke-RestMethod -Uri $functionsApiUrl -Headers $Headers -UseBasicParsing
+    $files = Invoke-RestMethod -Uri $ApiUrl -Headers $Headers -UseBasicParsing
 } catch {
     Write-Warning "Kan de lijst met functies niet ophalen: $($_.Exception.Message)"
     return
 }
 
+# -- Per bestand: alleen functiedefinities importeren --
 foreach ($file in $files) {
-    if ($file.name -like '*.ps1') {
+    if ($file.name -like '*.ps1' -and $file.download_url) {
         try {
             $code = Invoke-RestMethod -Uri $file.download_url -Headers $Headers -UseBasicParsing
             if ([string]::IsNullOrWhiteSpace($code)) {
@@ -34,9 +40,12 @@ foreach ($file in $files) {
                 continue
             }
 
-            $funcAsts = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $funcAsts = $ast.FindAll({
+                param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst]
+            }, $true)
+
             if ($funcAsts.Count -eq 0) {
-                Write-Warning "Geen functies gevonden in $($file.name); sla over (mogelijk top-level code)."
+                Write-Warning "Geen functies gevonden in $($file.name); mogelijk top-level code. Overgeslagen."
                 continue
             }
 
@@ -49,5 +58,10 @@ foreach ($file in $files) {
     }
 }
 
-# (Optioneel) specifieker exporteren:
-# Export-ModuleMember -Function Install-NFWindowsUpdates, Invoke-NFOobeUpdateWindows, Remove-AppxOnline, Remove-FeedbackHub, Remove-NFAppxBloatware
+# -- Exporteer alleen jouw publieke functies --
+Export-ModuleMember -Function `
+    Install-NFWindowsUpdates, `
+    Invoke-NFOobeUpdateWindows, `
+    Remove-AppxOnline, `
+    Remove-FeedbackHub, `
+    Remove-NFAppxBloatware
