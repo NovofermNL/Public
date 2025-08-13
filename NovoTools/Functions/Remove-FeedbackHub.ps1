@@ -53,7 +53,7 @@ function Remove-InstalledForAllUsers {
     }
 }
 
-function Cleanup-PerUserResiduals {
+function Remove-PerUserResiduals {
     Write-Host "Opschonen per-user restanten ..."
     $userRoots = Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue | Where-Object {
         $_.Name -notin @('Public','Default','Default User','All Users') -and
