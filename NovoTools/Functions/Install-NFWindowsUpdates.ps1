@@ -6,7 +6,7 @@
 function Install-NFWindowsUpdates {
  
     param (
-        [string]$UpdatePath = "\\Novoferm.info\dfs\Repository\OS\CU"
+        [string]$UpdatePath = "\\Novoferm.info\dfs\Repository\OS\CU\x64"
     )
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
