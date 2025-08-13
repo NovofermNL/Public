@@ -22,7 +22,7 @@ Start-Transcript -Path $LogFile -Append
 Write-Host "[$ScriptName] Start: $(Get-Date -Format 'dd-MM-yyyy HH:mm:ss')"
 
 #----- Hulpfuncties
-function Remove-ProvisionedFeedbackHub {
+function Remove-FeedbackHubProvisioned {
     Write-Host "Zoek en verwijder provisioned package(s) ..."
     $prov = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like '*WindowsFeedbackHub*' }
     if ($prov) {
@@ -35,7 +35,7 @@ function Remove-ProvisionedFeedbackHub {
     }
 }
 
-function Remove-InstalledForAllUsers {
+function Remove-FeedbackHubAllUsers {
     Write-Host "Zoek en verwijder geïnstalleerde app(s) voor alle gebruikers ..."
     $pkg = Get-AppxPackage -AllUsers -Name 'Microsoft.WindowsFeedbackHub'
     if ($pkg) {
@@ -53,7 +53,7 @@ function Remove-InstalledForAllUsers {
     }
 }
 
-function Remove-PerUserResiduals {
+function Remove-FeedbackhubPerUserResiduals {
     Write-Host "Opschonen per-user restanten ..."
     $userRoots = Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue | Where-Object {
         $_.Name -notin @('Public','Default','Default User','All Users') -and
@@ -89,7 +89,7 @@ function Remove-PerUserResiduals {
     }
 }
 
-function Remove-StartMenuShortcuts {
+function Remove-FeedbackhubStartMenuShortcuts {
     Write-Host "Verwijderen (gemeenschappelijke) Startmenu-snelkoppeling indien aanwezig ..."
     $commonStart = "$Env:ProgramData\Microsoft\Windows\Start Menu\Programs"
     $candidate1  = Join-Path $commonStart 'Feedback Hub.lnk'
@@ -102,7 +102,7 @@ function Remove-StartMenuShortcuts {
     }
 }
 
-function Set-BlockReinstallPolicy {
+function Set-FeedbackHubBlockReinstallPolicy {
     Write-Host "Instellen policy om (consumenten) herinstallaties te voorkomen ..."
     $ccKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent'
     if (-not (Test-Path $ccKey)) { New-Item -Path $ccKey -Force | Out-Null }
@@ -116,11 +116,11 @@ function Set-BlockReinstallPolicy {
 
 #----- Uitvoering
 try {
-    Remove-ProvisionedFeedbackHub
-    Remove-InstalledForAllUsers
-    Cleanup-PerUserResiduals
-    Remove-StartMenuShortcuts
-    Set-BlockReinstallPolicy
+    Remove-FeedbackHubProvisioned
+    Remove-FeedbackHubForAllUsers
+    Cleanup-FeedbackHubPerUserResiduals
+    Remove-FeedbackHubStartMenuShortcuts
+    Set-FeedbackHubBlockReinstallPolicy
 
     Write-Host "Klaar. Herstart wordt aangeraden zodat alle shell-caches ververst worden."
     $exitCode = 0
