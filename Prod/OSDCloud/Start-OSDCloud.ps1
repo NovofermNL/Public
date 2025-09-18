@@ -83,16 +83,6 @@ if ($uselocalimage -eq $true) {
         $ImageFileName = $ImageFileItem.Name
         $ImageFileFullName = $ImageFileItem.FullName
 
-        # Bevestiging
-        Write-Host "`nGeselecteerde WIM: $ImageFileFullName" -ForegroundColor Green
-
-        $confirm = Read-Host "Weet je zeker dat je dit bestand wilt gebruiken? (ja/nee)"
-        if ($confirm -ne "ja") {
-            Write-Warning "Installatie afgebroken door gebruiker."
-            $uselocalimage = $false
-            return
-        }
-
         # Variabelen instellen
         $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
         $Global:MyOSDCloud.ImageFileName = $ImageFileName
@@ -107,7 +97,7 @@ if ($uselocalimage -eq $true) {
     }
 }
 
-
+<#
 #=======================================================================
 #   Specific Driver Pack
 #=======================================================================
@@ -172,6 +162,7 @@ if ($Manufacturer -match "HP") {
 else {
     Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
 }
+#>
 #=======================================================================
 #   Write OSDCloud VARS to Console
 #=======================================================================
@@ -279,20 +270,9 @@ exit /b 0
 # Schrijf het SetupComplete script weg
 $SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd' -Encoding ascii -Force
 
-
 # Herstart na 20 seconden
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
 
-#   Herstart naar OOBE
-Restart-Computer
 
-###### EIDNE TEST ######
-
-
-#=======================================================================
-#   REBOOT DEVICE
-#=======================================================================
-#Write-Host  -ForegroundColor Green "Restarting now!"
-#Restart-Computer -Force
