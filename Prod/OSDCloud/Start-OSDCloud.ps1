@@ -84,7 +84,7 @@ if ($uselocalimage -eq $true) {
         $Global:MyOSDCloud.ImageFileItem = $ImageFileItem
         $Global:MyOSDCloud.ImageFileName = $ImageFileName
         $Global:MyOSDCloud.ImageFileFullName = $ImageFileFullName
-        $Global:MyOSDCloud.OSImageIndex = 5  # Pas aan indien nodig
+        $Global:MyOSDCloud.OSImageIndex = 1  # Pas aan indien nodig
 
         Write-Host "`nWIM-bestand succesvol geselecteerd: $ImageFileName" -ForegroundColor Green
     }
