@@ -5,15 +5,11 @@ Write-Host -ForegroundColor Green "$ScriptName $ScriptVersion"
 #=======================================================================
 #   OSDCLOUD Definitions
 #=======================================================================
-$Product = (Get-MyComputerProduct)
-$Model = (Get-MyComputerModel)
-$Manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
-$OSVersion = 'Windows 11'
-$OSReleaseID = '24H2'
-$OSName = 'Windows 11 24H2 x64'
-$OSEdition = 'Pro'
+# OSDCLOUD Definitions (opgeschoond)
+$OSName       = 'Windows 11 24H2 x64'
+$OSEdition    = 'Pro'
 $OSActivation = 'Volume'
-$OSLanguage = 'nl-nl'
+$OSLanguage   = 'nl-nl'
 
 #=======================================================================
 #   OSDCLOUD VARS
@@ -48,6 +44,7 @@ function Get-OSDCloudDrive {
     write-host "Current OSDCLOUD Drive is: $OSDCloudDrive"
     return $OSDCloudDrive
 }
+
 #=======================================================================
 #   OSDCLOUD Image met keuzemenu
 #=======================================================================
@@ -102,67 +99,15 @@ if ($uselocalimage -eq $true) {
 #   Specific Driver Pack
 #=======================================================================
 $DriverPack = Get-OSDCloudDriverPack -Product $Product -OSVersion $OSVersion -OSReleaseID $OSReleaseID
-
-# Forceer gebruik van TLS 1.2 voor veilig downloaden van modules
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Controleer of de machine van HP is
 if ($Manufacturer -match "HP") {
-    Write-Host "HP hardware gedetecteerd. Start met installatie van benodigde modules..."
-
-    # Schakel Publisher Signature Validation tijdelijk uit
-    $originalPolicy = Get-ExecutionPolicy
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-
-    # Installeer NuGet Package Provider
-    try {
-        Write-Host "NuGet Package Provider installeren..."
-        if (-not (Get-PackageProvider -Name NuGet -ErrorAction SilentlyContinue)) {
-            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope AllUsers -Force -ErrorAction Stop
-            Write-Host "NuGet Package Provider succesvol geïnstalleerd."
-        }
-        else {
-            Write-Host "NuGet Package Provider is al geïnstalleerd."
-        }
-    }
-    catch {
-        Write-Warning "NuGet Package Provider installatie mislukt: $_"
-    }
-
-    # Installeer PowerShellGet module
-    try {
-        Write-Host "PowerShellGet module installeren..."
-        if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
-            Install-Module -Name PowerShellGet -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
-            Write-Host "PowerShellGet module succesvol geïnstalleerd."
-        }
-        else {
-            Write-Host "PowerShellGet module is al geïnstalleerd."
-        }
-    }
-    catch {
-        Write-Warning "PowerShellGet installatie mislukt: $_"
-    }
-
-    # Installeer HPCMSL module
-    try {
-        Write-Host "HPCMSL module installeren..."
-        Install-Module -Name HPCMSL -Force -Scope AllUsers -SkipPublisherCheck -AcceptLicense -ErrorAction Stop
-        Write-Host "HPCMSL module succesvol geïnstalleerd."
-    }
-    catch {
-        Write-Warning "HPCMSL module installatie mislukt: $_"
-    }
-
-    # Herstel oorspronkelijke Execution Policy
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy $originalPolicy -Force
-
-    Write-Host "Installatie van HP-specifieke modules voltooid."
-}
-else {
+    # (uitgeschakeld)
+} else {
     Write-Host "Geen HP hardware gedetecteerd. Het script wordt beëindigd."
 }
 #>
+
 #=======================================================================
 #   Write OSDCloud VARS to Console
 #=======================================================================
@@ -172,28 +117,30 @@ Write-Output $Global:MyOSDCloud
 #   Update OSDCloud modules
 #=======================================================================
 $ModulePath = (Get-ChildItem -Path "$($Env:ProgramFiles)\WindowsPowerShell\Modules\osd" | Where-Object { $_.Attributes -match "Directory" } | select -Last 1).fullname
-import-module "$ModulePath\OSD.psd1" -Force
+Import-Module "$ModulePath\OSD.psd1" -Force
 
 #=======================================================================
 #   Start OSDCloud installation
 #=======================================================================
 Write-Host "Starting OSDCloud" -ForegroundColor Green
-write-host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
+Write-Host "Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage"
 
 Start-OSDCloud -OSName $OSName -OSEdition $OSEdition -OSActivation $OSActivation -OSLanguage $OSLanguage
 
-write-host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
+Write-Host "OSDCloud Process Complete, Running Custom Actions From Script Before Reboot" -ForegroundColor Green
 
 ##### TEST #####
 Write-Host -ForegroundColor Green "Downloading and creating script for OOBE phase"
+
+# Zorg dat de scripts-map bestaat vóór het wegschrijven
+New-Item -ItemType Directory -Path 'C:\Windows\Setup\scripts' -Force | Out-Null
 
 Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Remove-Appx.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Remove-AppX.ps1' -Encoding ascii -Force
 Invoke-WebRequest -Uri "https://github.com/NovofermNL/Public/raw/main/Prod/Files/start2.bin" -OutFile "C:\Windows\Setup\scripts\start2.bin"
 Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Copy-Start.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Copy-Start.ps1' -Encoding ascii -Force
 #Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Custom-Tweaks.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Custom-Tweaks.ps1' -Encoding ascii -Force
 #Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Prod/OSDCloud/Create-ScheduledTask.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\Create-ScheduledTask.ps1' -Encoding ascii -Force
-
-#invoke-RestMethod https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1 | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
+#Invoke-RestMethod "https://raw.githubusercontent.com/NovofermNL/Public/main/Dev/OSD-CleanUp.ps1" | Out-File -FilePath 'C:\Windows\Setup\scripts\OSD-CleanUp.ps1' -Encoding ascii -Force
 
 $OOBECMD = @'
 @echo off
@@ -226,21 +173,17 @@ reg add "HKLM\Software\Policies\Microsoft\SQMClient\Windows" /v CEIPEnable /t RE
 reg add "HKLM\SOFTWARE\Microsoft\Office\16.0\Outlook\AutoDiscover" /v ExcludeHttpsRootDomain /t REG_DWORD /d 1 /f
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v HideRecommendedSection /t REG_DWORD /d 1 /f
 
-
 :: Cleanup logs en folders
 echo === Start Cleanup %date% %time% === >> "%logfile%"
 if exist "C:\Windows\Temp" (
     copy /Y "C:\Windows\Temp\*.log" "%logfolder%" >> "%logfile%" 2>&1
 )
-
 if exist "C:\Temp" (
     copy /Y "C:\Temp\*.log" "%logfolder%" >> "%logfile%" 2>&1
 )
-
 if exist "C:\OSDCloud\Logs" (
     copy /Y "C:\OSDCloud\Logs\*.log" "%logfolder%" >> "%logfile%" 2>&1
 )
-
 if exist "C:\ProgramData\OSDeploy" (
     copy /Y "C:\ProgramData\OSDeploy\*.log" "%logfolder%" >> "%logfile%" 2>&1
 )
@@ -274,5 +217,3 @@ $SetupComplete | Out-File -FilePath 'C:\Windows\Setup\scripts\SetupComplete.cmd'
 Write-Host -ForegroundColor Green "Herstart in 20 seconden..."
 Start-Sleep -Seconds 20
 wpeutil reboot
-
-
