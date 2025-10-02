@@ -8,7 +8,7 @@ function Set-TrustedPSGallery {
     [CmdletBinding()]
     param()
 
-    # Zorg dat TLS 1.2 wordt gebruikt (best practice)
+    # Zorg dat TLS 1.2 wordt gebruikt
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
     if (Get-PSRepository | Where-Object { $_.Name -eq "PSGallery" -and $_.InstallationPolicy -ne "Trusted" }) {
